@@ -149,6 +149,8 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
 
     if (!empty($page->category) && $page->category === 'tweet') {
       $result = $this->doPostToTwitter($page);
+      var_dump($result);
+      exit;
 
       if (is_array($result) && !empty($result['id_str'])) {
         $page->twitter_post_id = (int)$result['id_str'];
@@ -168,7 +170,7 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
     $signatureMethod = new Twitter_OAuthSignatureMethod_HMAC_SHA1();
 
     $method = 'POST';
-    $resource = isset($data['media']) ? $this->resource_update : $this->resource_update_with_media;
+    $resource = isset($data['media']) ? $this->resource_update_with_media : $this->resource_update;
 
     $request = Twitter_OAuthRequest::from_consumer_and_token(
       $consumer, $token, $method, $resource, $data
