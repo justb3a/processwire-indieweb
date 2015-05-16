@@ -11,7 +11,7 @@
  *
  * @author Tabea David <td@kf-interactive.com>
  * @version 0.0.1
- * @copyright Copyright (c) 2014 KF Interactive, www.kf-interactive.com, <info@kf-interactive.com>
+ * @copyright Copyright (c) 2015 KF Interactive, www.kf-interactive.com, <info@kf-interactive.com>
  * @see https://github.com/justonestep/processwire-mobiledetect
  * @see http://www.processwire.com
  */
@@ -51,9 +51,16 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
     'accessToken' => '',
     'accessTokenSecret' => '',
     'resourceUpdate' => 'https://api.twitter.com/1.1/statuses/update.json',
-    'resourceUpdateWithMedia' => 'https://api.twitter.com/1.1/statuses/update_with_media.json'
+    'resourceUpdateWithMedia' => 'https://api.twitter.com/1.1/statuses/update_with_media.json',
+    'twitter' => ''
   );
 
+  protected static $tmpls = array(
+    'list' => 'iw_notes',
+    'single' => 'iw_note'
+  );
+
+  protected static $tokenEndpoint = 'https://tokens.indieauth.com/token';
 
   /**
    * Retrieves the list of config input fields
@@ -118,6 +125,14 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
     $field->columnWidth = '50';
     $fields->append($field);
 
+    $field = $modules->get('InputfieldText');
+    $field->label = __('Twitter Handle');
+    $field->attr('name', 'twitter');
+    $field->attr('size', 50);
+    $field->attr('value', $data['twitter']);
+    $field->columnWidth = '50';
+    $fields->append($field);
+
     return $fields;
   }
 
@@ -136,7 +151,33 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
    *
    */
   public function init() {
+    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitter . '/status/';
+
+    // set page title to current datetime
+    $this->addHookBefore('Inputfield::render', $this, 'renderField');
+
+    // post to twitter
     $this->addHookBefore('Pages::published', $this, 'postToTwitter');
+  }
+
+  /**
+   * Hook
+   *
+   * @param HookEvent $event
+   */
+  public function renderField(HookEvent $event) {
+    $field = $event->object;
+    $parent_id = wire('input')->get->parent_id;
+
+    if (!empty($parent_id)) {
+      $parent = wire('pages')->get($parent_id);
+
+      if ($parent->template->name === self::$tmpls['list']) {
+        if (in_array($field->name, array('title', '_pw_page_name')) && empty($field->value)) {
+          $field->set('value', date('Ymd-Hi'));
+        }
+      }
+    }
   }
 
   /**
@@ -147,13 +188,11 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
   public function postToTwitter(HookEvent $event) {
     $page = $event->arguments(0);
 
-    if (!empty($page->category) && $page->category === 'tweet') {
+    if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
       $result = $this->doPostToTwitter($page);
-      var_dump($result);
-      exit;
 
       if (is_array($result) && !empty($result['id_str'])) {
-        $page->twitter_post_id = (int)$result['id_str'];
+        $page->iw_twitter_post_id = (int)$result['id_str'];
         $page->save();
       }
     }
@@ -162,7 +201,7 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
   public function doPostToTwitter($page) {
     $data = array(
       // 'media' => $page->images->first->url,
-      'status' => $page->content
+      'status' => $page->iw_content
     );
 
     $consumer = new Twitter_OAuthConsumer($this->consumer_key, $this->consumer_secret);
@@ -200,4 +239,124 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
     return json_decode($result, true);
   }
 
+  public function micropub() {
+    $site = 'http://' . wire('config')->httpHost . '/';
+    $post = wire('input')->post;
+
+    $_HEADERS = array();
+    foreach ($this->getallheaders() as $name => $value) {
+      $_HEADERS[$name] = $value;
+    }
+
+    if (!isset($_HEADERS['Authorization'])) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
+      throw new WirePermissionException($this->_('Missing Authorization header.'));
+    }
+    if (!isset($post['h'])) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
+      throw new WireException($this->_('Missing *h* value.'));
+    }
+
+    $options = array(
+      CURLOPT_URL => self::$tokenEndpoint,
+      CURLOPT_HTTPGET => TRUE,
+      CURLOPT_USERAGENT => $site,
+      CURLOPT_TIMEOUT => 5,
+      CURLOPT_RETURNTRANSFER => TRUE,
+      CURLOPT_HEADER => FALSE,
+      CURLOPT_HTTPHEADER => array(
+        'Content-type: application/x-www-form-urlencoded',
+        'Authorization: '.$_HEADERS['Authorization']
+      )
+    );
+
+    $curl = curl_init();
+    curl_setopt_array($curl, $options);
+    $source = curl_exec($curl);
+    curl_close($curl);
+
+    parse_str($source, $values);
+
+    if (!isset($values['me'])) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
+      throw new WireException($this->_('Missing *me* value in authentication token.'));
+    }
+
+    if (!isset($values['scope'])) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
+      throw new WireException($this->_('Missing *scope* value in authentication token.'));
+    }
+
+    if (substr($values['me'], -1) != '/') $values['me'] .= '/';
+
+    if (strtolower($values['me']) != strtolower($site)) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
+      throw new WirePermissionException($this->_('Mismatching *me* value in authentication token.'));
+    }
+
+    if (!stristr($values['scope'], 'post')) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
+      throw new WirePermissionException($this->_('Missing *post* value in *scope*.'));
+    }
+
+    if (!isset($post['iw_content'])) {
+      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
+      throw new WireException($this->_('Missing *content* value.'));
+    }
+
+    // create new page object and save it to make image fields available for uploading
+    // first save page - status unpublished to invoke hook to post to twitter via quill
+    $p = new \Page();
+    $p->template = self::$tmpls['single'];
+    $p->parent = wire('pages')->get('/' . self::$tmpls['list'] . '/');
+
+    $p->iw_category = $post['iw_category'];
+    $p->iw_pubdate = date('Y-m-d H:i');
+    $p->iw_content = $post['iw_content'];
+
+    if ($post['iw_location']) $p->iw_location = $post['iw_location'];
+    if ($post['iw_place_name']) $p->iw_place_name = $post['iw_place_name'];
+
+    $p->addStatus(Page::statusUnpublished);
+    $p->save();
+
+    // adding images
+    // $img_path = $_FILES['photo']['tmp_name'];
+    // $img_name = $_FILES['photo']['name'];
+    //
+    // // $_FILES array singular vs. multiple
+    // // normalize by converting single to array prior to looping.
+    // // http://php.net/manual/en/reserved.variables.files.php
+    //
+    // if (!(is_array($img_path))){
+    //   $img_path = array($img_path);
+    //   $img_name = array($img_name);
+    // }
+    //
+    // for ($i=0; $i < count($img_path); $i++){
+    //   $p->images->add($img_path[$i]);
+    // }
+    //
+
+    $p->removeStatus(Page::statusUnpublished);
+    $p->save();
+
+
+    header($_SERVER['SERVER_PROTOCOL'] . ' 201 Created');
+    header('Location: ' . $mysite);
+  }
+
+  public function getallheaders() {
+    if (!function_exists('getallheaders')) {
+      function getallheaders() {
+        $headers = '';
+        foreach ($_SERVER as $name => $value) {
+          if (substr($name, 0, 5) == 'HTTP_') {
+            $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+          }
+        }
+        return $headers;
+      }
+    }
+  }
 }
