@@ -2,7 +2,6 @@
 
 /**
  *
- *
  * See README.md for usage instructions.
  *
  * ProcessWire 2.x
@@ -12,7 +11,7 @@
  * @author Tabea David <td@kf-interactive.com>
  * @version 0.0.1
  * @copyright Copyright (c) 2015 KF Interactive, www.kf-interactive.com, <info@kf-interactive.com>
- * @see https://github.com/justonestep/processwire-mobiledetect
+ * @see https://github.com/justonestep/processwire-indieweb
  * @see http://www.processwire.com
  */
 
@@ -20,9 +19,9 @@ require_once('oauth/OAuth.php');
 require_once('oauth/Twitter.php');
 
 /**
- * Class TwitterConnect
+ * Class IndieWeb
  */
-class TwitterConnect extends WireData implements Module, ConfigurableModule {
+class IndieWeb extends WireData implements Module, ConfigurableModule {
 
   /**
    * Retrieves module meta data
@@ -33,12 +32,13 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
    */
   public static function getModuleInfo() {
     return array(
-      'title' => 'Twitter Connect',
-      'summary' => '',
+      'title' => 'Indie Web',
+      'summary' => 'This module provides an easy way to add a basic twitter connection to your site.',
       'version' => 1,
-      'href' => 'https://github.com/justonestep/processwire-mobiledetect',
+      'href' => 'https://github.com/justonestep/processwire-indieweb',
       'singular' => true,
       'autoload' => true,
+      'icon' => 'empire'
     );
   }
 
@@ -52,7 +52,7 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
     'accessTokenSecret' => '',
     'resourceUpdate' => 'https://api.twitter.com/1.1/statuses/update.json',
     'resourceUpdateWithMedia' => 'https://api.twitter.com/1.1/statuses/update_with_media.json',
-    'twitter' => ''
+    'twitterHandle' => ''
   );
 
   protected static $tmpls = array(
@@ -79,57 +79,57 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Consumer Key');
-    $field->attr('name', 'consumer_key');
+    $field->attr('name', 'consumerKey');
     $field->attr('size', 50);
-    $field->attr('value', $data['consumer_key']);
+    $field->attr('value', $data['consumerKey']);
     $field->columnWidth = '50';
     $fields->append($field);
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Consumer Secret');
-    $field->attr('name', 'consumer_secret');
+    $field->attr('name', 'consumerSecret');
     $field->attr('size', 50);
-    $field->attr('value', $data['consumer_secret']);
+    $field->attr('value', $data['consumerSecret']);
     $field->columnWidth = '50';
     $fields->append($field);
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Access Token');
-    $field->attr('name', 'access_token');
+    $field->attr('name', 'accessToken');
     $field->attr('size', 50);
-    $field->attr('value', $data['access_token']);
+    $field->attr('value', $data['accessToken']);
     $field->columnWidth = '50';
     $fields->append($field);
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Access Token Secret');
-    $field->attr('name', 'access_token_secret');
+    $field->attr('name', 'accessTokenSecret');
     $field->attr('size', 50);
-    $field->attr('value', $data['access_token_secret']);
+    $field->attr('value', $data['accessTokenSecret']);
     $field->columnWidth = '50';
     $fields->append($field);
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Resource Update');
-    $field->attr('name', 'resource_update');
+    $field->attr('name', 'resourceUpdate');
     $field->attr('size', 50);
-    $field->attr('value', $data['resource_update']);
+    $field->attr('value', $data['resourceUpdate']);
     $field->columnWidth = '50';
     $fields->append($field);
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Resource Update With Media');
-    $field->attr('name', 'resource_update_with_media');
+    $field->attr('name', 'resourceUpdateWithMedia');
     $field->attr('size', 50);
-    $field->attr('value', $data['resource_update_with_media']);
+    $field->attr('value', $data['resourceUpdateWithMedia']);
     $field->columnWidth = '50';
     $fields->append($field);
 
     $field = $modules->get('InputfieldText');
     $field->label = __('Twitter Handle');
-    $field->attr('name', 'twitter');
+    $field->attr('name', 'twitterHandle');
     $field->attr('size', 50);
-    $field->attr('value', $data['twitter']);
+    $field->attr('value', $data['twitterHandle']);
     $field->columnWidth = '50';
     $fields->append($field);
 
@@ -151,7 +151,7 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
    *
    */
   public function init() {
-    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitter . '/status/';
+    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
 
     // set page title to current datetime
     $this->addHookBefore('Inputfield::render', $this, 'renderField');
@@ -204,12 +204,12 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
       'status' => $page->iw_content
     );
 
-    $consumer = new Twitter_OAuthConsumer($this->consumer_key, $this->consumer_secret);
-    $token = new Twitter_OAuthConsumer($this->access_token, $this->access_token_secret);
+    $consumer = new Twitter_OAuthConsumer($this->consumerKey, $this->consumerSecret);
+    $token = new Twitter_OAuthConsumer($this->accessToken, $this->accessTokenSecret);
     $signatureMethod = new Twitter_OAuthSignatureMethod_HMAC_SHA1();
 
     $method = 'POST';
-    $resource = isset($data['media']) ? $this->resource_update_with_media : $this->resource_update;
+    $resource = isset($data['media']) ? $this->resourceUpdateWithMedia : $this->resourceUpdate;
 
     $request = Twitter_OAuthRequest::from_consumer_and_token(
       $consumer, $token, $method, $resource, $data
@@ -227,8 +227,7 @@ class TwitterConnect extends WireData implements Module, ConfigurableModule {
       CURLOPT_URL => $request -> to_url(),
       CURLOPT_TIMEOUT => 20,
       CURLOPT_SSL_VERIFYPEER => 0,
-      CURLOPT_HTTPHEADER => array('Expect:'),
-      CURLOPT_USERAGENT => 'adactio.com',
+      CURLOPT_HTTPHEADER => array('Expect:')
     );
 
     $curl = curl_init();
