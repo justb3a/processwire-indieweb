@@ -270,7 +270,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     // first save page - status unpublished to invoke hook to post to twitter via quill
     $p = new \Page();
     $p->template = self::$tmpls['single'];
-    $p->parent = wire('pages')->get('/' . self::$tmpls['list'] . '/');
+    $p->parent = wire('pages')->get('template=' . self::$tmpls['list']);
 
     $p->iw_category = $post['category'];
     $p->iw_pubdate = date('Y-m-d H:i');
