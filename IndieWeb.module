@@ -261,7 +261,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
       throw new WirePermissionException($this->_('Missing *post* value in *scope*.'));
     }
 
-    if (!isset($post['iw_content'])) {
+    if (!isset($post['content'])) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
       throw new WireException($this->_('Missing *content* value.'));
     }
@@ -272,12 +272,12 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $p->template = self::$tmpls['single'];
     $p->parent = wire('pages')->get('/' . self::$tmpls['list'] . '/');
 
-    $p->iw_category = $post['iw_category'];
+    $p->iw_category = $post['category'];
     $p->iw_pubdate = date('Y-m-d H:i');
-    $p->iw_content = $post['iw_content'];
+    $p->iw_content = $post['content'];
 
-    if ($post['iw_location']) $p->iw_location = $post['iw_location'];
-    if ($post['iw_place_name']) $p->iw_place_name = $post['iw_place_name'];
+    if ($post['location']) $p->iw_location = $post['location'];
+    if ($post['place_name']) $p->iw_place_name = $post['place_name'];
 
     $p->addStatus(Page::statusUnpublished);
     $p->save();
