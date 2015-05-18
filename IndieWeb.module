@@ -15,8 +15,8 @@
  * @see http://www.processwire.com
  */
 
-require_once('oauth/OAuth.php');
-require_once('oauth/Twitter.php');
+require "vendor/autoload.php";
+use Abraham\TwitterOAuth\TwitterOAuth;
 
 /**
  * Class IndieWeb
@@ -50,8 +50,6 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     'consumerSecret' => '',
     'accessToken' => '',
     'accessTokenSecret' => '',
-    'resourceUpdate' => 'https://api.twitter.com/1.1/statuses/update.json',
-    'resourceUpdateWithMedia' => 'https://api.twitter.com/1.1/statuses/update_with_media.json',
     'twitterHandle' => ''
   );
 
@@ -106,22 +104,6 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $field->attr('name', 'accessTokenSecret');
     $field->attr('size', 50);
     $field->attr('value', $data['accessTokenSecret']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Resource Update');
-    $field->attr('name', 'resourceUpdate');
-    $field->attr('size', 50);
-    $field->attr('value', $data['resourceUpdate']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Resource Update With Media');
-    $field->attr('name', 'resourceUpdateWithMedia');
-    $field->attr('size', 50);
-    $field->attr('value', $data['resourceUpdateWithMedia']);
     $field->columnWidth = '50';
     $fields->append($field);
 
@@ -191,51 +173,32 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
       $result = $this->doPostToTwitter($page);
 
-      if (is_array($result) && !empty($result['id_str'])) {
-        $page->iw_twitter_post_id = (int)$result['id_str'];
+      if (is_object($result) && !empty($result->id_str)) {
+        $page->iw_twitter_post_id = $result->id_str;
         $page->save();
       }
     }
   }
 
   public function doPostToTwitter($page) {
-    $data = array(
-      // 'media' => $page->images->first->url,
-      'status' => $page->iw_content
+    $connection = new TwitterOAuth($this->consumerKey, $this->consumerSecret, $this->accessToken, $this->accessTokenSecret);
+
+    $medias = array();
+    foreach ($page->iw_image as $img) {
+      $media = $connection->upload('media/upload', array('media' => $img->filename));
+      $medias[] = $media->media_id_string;
+    }
+
+    $params = array(
+      'status' => $page->iw_content,
     );
 
-    $consumer = new Twitter_OAuthConsumer($this->consumerKey, $this->consumerSecret);
-    $token = new Twitter_OAuthConsumer($this->accessToken, $this->accessTokenSecret);
-    $signatureMethod = new Twitter_OAuthSignatureMethod_HMAC_SHA1();
+    if (count($medias)) $params['media_ids'] = implode(',', $medias);
 
-    $method = 'POST';
-    $resource = isset($data['media']) ? $this->resourceUpdateWithMedia : $this->resourceUpdate;
+    $result = $connection->post("statuses/update", $params);
+    if ($connection->getLastHttpCode() != 200) $result = '';
 
-    $request = Twitter_OAuthRequest::from_consumer_and_token(
-      $consumer, $token, $method, $resource, $data
-    );
-
-    $request->sign_request(
-      $signatureMethod, $consumer, $token
-    );
-
-    $options = array(
-      CURLOPT_HEADER => FALSE,
-      CURLOPT_RETURNTRANSFER => TRUE,
-      CURLOPT_POST => TRUE,
-      CURLOPT_POSTFIELDS => $data,
-      CURLOPT_URL => $request -> to_url(),
-      CURLOPT_TIMEOUT => 20,
-      CURLOPT_SSL_VERIFYPEER => 0,
-      CURLOPT_HTTPHEADER => array('Expect:')
-    );
-
-    $curl = curl_init();
-    curl_setopt_array($curl, $options);
-    $result = curl_exec($curl);
-    curl_close($curl);
-
-    return json_decode($result, true);
+    return $result;
   }
 
   public function micropub() {
