@@ -184,7 +184,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $connection = new TwitterOAuth($this->consumerKey, $this->consumerSecret, $this->accessToken, $this->accessTokenSecret);
 
     $medias = array();
-    foreach ($page->iw_image as $img) {
+    foreach ($page->iw_images as $img) {
       $media = $connection->upload('media/upload', array('media' => $img->filename));
       $medias[] = $media->media_id_string;
     }
