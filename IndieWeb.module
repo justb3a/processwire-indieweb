@@ -305,7 +305,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
 
 
     header($_SERVER['SERVER_PROTOCOL'] . ' 201 Created');
-    header('Location: ' . $mysite);
+    header('Location: ' . $site);
   }
 
   public function getallheaders() {
