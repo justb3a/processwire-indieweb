@@ -43,6 +43,11 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   }
 
   /**
+   * string class name
+   */
+  const CLASS_NAME = 'IndieWeb';
+
+  /**
    * @field array Default config values
    */
   protected static $defaults = array(
@@ -59,6 +64,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   );
 
   protected static $tokenEndpoint = 'https://tokens.indieauth.com/token';
+  protected static $geocodeEndpoint = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&sensor=false';
 
   /**
    * Retrieves the list of config input fields
@@ -140,6 +146,18 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
 
     // post to twitter
     $this->addHookBefore('Pages::published', $this, 'postToTwitter');
+
+    // add geolocation to determine lat and long
+    $this->addHookAfter('ProcessPageEdit::execute', $this, 'addGeolocation');
+  }
+
+  /**
+   * add geolocation script
+   *
+   * @param HookEvent $event
+   */
+  public function addGeolocation(HookEvent $event) {
+    $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'Geolocation.js');
   }
 
   /**
@@ -194,6 +212,12 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     );
 
     if (count($medias)) $params['media_ids'] = implode(',', $medias);
+
+    if (!empty($page->iw_location_latitude) && !empty($page->iw_location_longitude)) {
+      $params['lat'] = (float)$page->iw_location_latitude;
+      $params['long'] = (float)$page->iw_location_longitude;
+      $params['display_coordinates'] = true;
+    }
 
     $result = $connection->post("statuses/update", $params);
     if ($connection->getLastHttpCode() != 200) $result = '';
@@ -316,5 +340,31 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
       }
     }
     return $headers;
+  }
+
+  public function getAddress($lat, $lng) {
+    $address = '';
+    $url = sprintf(self::$geocodeEndpoint, trim($lat), trim($lng));
+    $json = file_get_contents($url);
+    $data = json_decode($json);
+
+    if ($data->status === 'OK') {
+      $address = $data->results[3]->formatted_address;
+    }
+
+    return $address;
+  }
+
+  public function tweetMarkup($tweet) {
+    // links
+    $tweet = preg_replace('%\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))%s', '<a href="$1">$1</a>', $tweet);
+
+    // hashs
+    $tweet = preg_replace('/(^|\s)#(\w*[a-zA-Z_]+\w*)/', '\1<a href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+
+    // users
+    $tweet = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $tweet);
+
+    return $tweet;
   }
 }
