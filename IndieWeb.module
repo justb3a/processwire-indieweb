@@ -43,6 +43,11 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   }
 
   /**
+   * string class name
+   */
+  const CLASS_NAME = 'IndieWeb';
+
+  /**
    * @field array Default config values
    */
   protected static $defaults = array(
@@ -140,6 +145,18 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
 
     // post to twitter
     $this->addHookBefore('Pages::published', $this, 'postToTwitter');
+
+    // add geolocation to determine lat and long
+    $this->addHookAfter('ProcessPageEdit::execute', $this, 'addGeolocation');
+  }
+
+  /**
+   * add geolocation script
+   *
+   * @param HookEvent $event
+   */
+  public function addGeolocation(HookEvent $event) {
+    $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'Geolocation.js');
   }
 
   /**
