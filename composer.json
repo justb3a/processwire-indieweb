@@ -1,6 +1,8 @@
 {
     "require": {
       "php": ">=5.4.0",
-      "abraham/twitteroauth": "0.5.2"
+      "abraham/twitteroauth": "0.5.2",
+      "mf2/mf2": "0.2.10",
+      "indieweb/comments": "dev-master"
     }
 }

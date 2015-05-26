@@ -2,6 +2,7 @@
 
 namespace Kfi\IndieWeb;
 
+require_once(wire('config')->paths->IndieWeb . 'vendor/autoload.php');
 use WireException;
 
 class Webmentions {
@@ -26,11 +27,22 @@ class Webmentions {
       throw new WireException(__('Invalid target'));
     }
 
-    $http = wire('config')->https === true ? 'https' : 'http';
-    $site = "$http://" . wire('config')->httpHost . '/';
-    if (!strpos($target, $site)) {
+    if (!strpos($target, wire('config')->httpHost)) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
       throw new WireException(__('Invalid target'));
     }
+
+    $data = \Mf2\fetch($source);
+    $result = '';
+    if (count($data['items'])) {
+      $result = \IndieWeb\comments\parse($data['items'][0], $source);
+    }
+
+    if (empty($result)) {
+      throw new WireException(__('Probably spam'));
+    }
+
+    //@todo: use / save result
   }
+
 }
