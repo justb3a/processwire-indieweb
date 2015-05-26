@@ -18,7 +18,8 @@ class Micropub {
   }
 
   public function start() {
-    $site = 'http://' . wire('config')->httpHost . '/';
+    $http = wire('config')->https === true ? 'https' : 'http';
+    $site = "$http://" . wire('config')->httpHost . '/';
     $post = wire('input')->post;
 
     $_HEADERS = array();
@@ -119,7 +120,6 @@ class Micropub {
 
     $p->removeStatus(Page::statusUnpublished);
     $p->save();
-
 
     header($_SERVER['SERVER_PROTOCOL'] . ' 201 Created');
     header('Location: ' . $site);

@@ -15,8 +15,12 @@
  * @see http://www.processwire.com
  */
 
-// require "vendor/autoload.php";
-// use Abraham\TwitterOAuth\TwitterOAuth;
+require_once(wire('config')->paths->IndieWeb . 'lib/Micropub.php');
+require_once(wire('config')->paths->IndieWeb . 'lib/PostToTwitter.php');
+require_once(wire('config')->paths->IndieWeb . 'lib/Webmentions.php');
+use Kfi\IndieWeb\Micropub;
+use Kfi\IndieWeb\PostToTwitter;
+use Kfi\IndieWeb\Webmentions;
 
 /**
  * Class IndieWeb
@@ -69,8 +73,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    * construct - require libs
    */
   public function __construct() {
-    require_once(wire('config')->paths->IndieWeb . 'lib/Micropub.php');
-    require_once(wire('config')->paths->IndieWeb . 'lib/PostToTwitter.php');
+    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
   }
 
   /**
@@ -146,13 +149,11 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    *
    */
   public function init() {
-    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
-
     // set page title to current datetime
     $this->addHookBefore('Inputfield::render', $this, 'renderField');
 
     // post to twitter
-    $this->addHookBefore('Pages::published', $this, 'postToTwitter');
+    $this->addHookBefore('Pages::published', $this, 'postingToTwitter');
 
     // add geolocation to determine lat and long
     $this->addHookAfter('ProcessPageEdit::execute', $this, 'addGeolocation');
@@ -192,16 +193,20 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    *
    * @param HookEvent $event
    */
-  public function postToTwitter(HookEvent $event) {
+  public function postingToTwitter(HookEvent $event) {
     $page = $event->arguments(0);
 
     if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
-      $result = new Kfi\IndieWeb\PostToTwitter($page);
+      new PostToTwitter($page);
     }
   }
 
   public function micropub() {
-    new Kfi\IndieWeb\Micropub;
+    new Micropub;
+  }
+
+  public function webmention() {
+    new Webmentions;
   }
 
   public function getAddress($lat, $lng) {
