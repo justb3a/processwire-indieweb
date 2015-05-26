@@ -15,8 +15,8 @@
  * @see http://www.processwire.com
  */
 
-require "vendor/autoload.php";
-use Abraham\TwitterOAuth\TwitterOAuth;
+// require "vendor/autoload.php";
+// use Abraham\TwitterOAuth\TwitterOAuth;
 
 /**
  * Class IndieWeb
@@ -70,6 +70,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   public function __construct() {
     require_once(wire('config')->paths->IndieWeb . 'lib/Micropub.php');
+    require_once(wire('config')->paths->IndieWeb . 'lib/PostToTwitter.php');
   }
 
   /**
@@ -195,40 +196,8 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $page = $event->arguments(0);
 
     if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
-      $result = $this->doPostToTwitter($page);
-
-      if (is_object($result) && !empty($result->id_str)) {
-        $page->iw_twitter_post_id = $result->id_str;
-        $page->save();
-      }
+      $result = new Kfi\IndieWeb\PostToTwitter($page);
     }
-  }
-
-  public function doPostToTwitter($page) {
-    $connection = new TwitterOAuth($this->consumerKey, $this->consumerSecret, $this->accessToken, $this->accessTokenSecret);
-
-    $medias = array();
-    foreach ($page->iw_images as $img) {
-      $media = $connection->upload('media/upload', array('media' => $img->filename));
-      $medias[] = $media->media_id_string;
-    }
-
-    $params = array(
-      'status' => $page->iw_content,
-    );
-
-    if (count($medias)) $params['media_ids'] = implode(',', $medias);
-
-    if (!empty($page->iw_location_latitude) && !empty($page->iw_location_longitude)) {
-      $params['lat'] = (float)$page->iw_location_latitude;
-      $params['long'] = (float)$page->iw_location_longitude;
-      $params['display_coordinates'] = true;
-    }
-
-    $result = $connection->post("statuses/update", $params);
-    if ($connection->getLastHttpCode() != 200) $result = '';
-
-    return $result;
   }
 
   public function micropub() {
