@@ -88,10 +88,10 @@ class Micropub {
     // create new page object and save it to make image fields available for uploading
     // first save page - status unpublished to invoke hook to post to twitter via quill
     $p = new \Page();
-    $p->name = date('Ymd-Hi');
-    $p->title = $p->name;
     $p->template = self::$tmpls['single'];
     $p->parent = wire('pages')->get('template=' . self::$tmpls['list']);
+    $p->name = date('Ymd-Hi');
+    $p->title = $p->name;
 
     $p->iw_category = $post['category'];
     $p->iw_pubdate = date('Y-m-d H:i');
