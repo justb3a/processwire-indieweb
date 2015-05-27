@@ -1,0 +1,179 @@
+[
+    {
+        "name": "abraham/twitteroauth",
+        "version": "0.5.2",
+        "version_normalized": "0.5.2.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/abraham/twitteroauth.git",
+            "reference": "040a2ebe76dc836e5edab83e7f036897a8715785"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/abraham/twitteroauth/zipball/040a2ebe76dc836e5edab83e7f036897a8715785",
+            "reference": "040a2ebe76dc836e5edab83e7f036897a8715785",
+            "shasum": ""
+        },
+        "require": {
+            "ext-curl": "*",
+            "php": ">=5.4.0"
+        },
+        "require-dev": {
+            "phpmd/phpmd": "2.*",
+            "phpunit/phpunit": "4.*",
+            "squizlabs/php_codesniffer": "2.*"
+        },
+        "time": "2015-03-19 05:51:18",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Abraham\\TwitterOAuth\\": "src"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Abraham Williams",
+                "email": "abraham@abrah.am",
+                "homepage": "https://abrah.am",
+                "role": "Developer"
+            }
+        ],
+        "description": "The most popular PHP library for use with the Twitter OAuth REST API.",
+        "homepage": "https://twitteroauth.com",
+        "keywords": [
+            "Twitter API",
+            "Twitter oAuth",
+            "api",
+            "oauth",
+            "rest",
+            "social",
+            "twitter"
+        ]
+    },
+    {
+        "name": "mf2/mf2",
+        "version": "v0.2.10",
+        "version_normalized": "0.2.10.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/indieweb/php-mf2.git",
+            "reference": "e514512cd8706d48bd33ae169b66427b32c777e3"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/indieweb/php-mf2/zipball/e514512cd8706d48bd33ae169b66427b32c777e3",
+            "reference": "e514512cd8706d48bd33ae169b66427b32c777e3",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.0"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "3.7.*"
+        },
+        "suggest": {
+            "barnabywalters/mf-cleaner": "To more easily handle the canonical data php-mf2 gives you"
+        },
+        "time": "2015-04-29 09:49:04",
+        "bin": [
+            "bin/fetch-mf2",
+            "bin/parse-mf2"
+        ],
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "files": [
+                "Mf2/Parser.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Barnaby Walters",
+                "homepage": "http://waterpigs.co.uk"
+            }
+        ],
+        "description": "A pure, generic microformats2 parser — makes HTML as easy to consume as a JSON API",
+        "keywords": [
+            "html",
+            "microformats",
+            "microformats 2",
+            "parser",
+            "semantic"
+        ]
+    },
+    {
+        "name": "tantek/cassis",
+        "version": "v0.1.16124",
+        "version_normalized": "0.1.16124.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/tantek/cassis.git",
+            "reference": "b9ec7142179950010c896ec3894aece0a56b0029"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/tantek/cassis/zipball/b9ec7142179950010c896ec3894aece0a56b0029",
+            "reference": "b9ec7142179950010c896ec3894aece0a56b0029",
+            "shasum": ""
+        },
+        "time": "2014-02-18 20:17:32",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "files": [
+                "cassis-loader.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/"
+    },
+    {
+        "name": "indieweb/comments",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/indieweb/php-comments.git",
+            "reference": "b61bc2d8821c714dc9f7fb9a732597e1ade39c5a"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/indieweb/php-comments/zipball/b61bc2d8821c714dc9f7fb9a732597e1ade39c5a",
+            "reference": "b61bc2d8821c714dc9f7fb9a732597e1ade39c5a",
+            "shasum": ""
+        },
+        "require": {
+            "tantek/cassis": "0.1.16124"
+        },
+        "time": "2015-01-19 02:06:14",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "files": [
+                "src/indieweb/comments.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Apache-2.0"
+        ],
+        "authors": [
+            {
+                "name": "Aaron Parecki",
+                "homepage": "http://aaronparecki.com"
+            }
+        ],
+        "keywords": [
+            "comments",
+            "indieweb"
+        ]
+    }
+]
