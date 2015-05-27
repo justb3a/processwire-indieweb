@@ -90,7 +90,6 @@ class Micropub {
     $p = new \Page();
     $p->template = self::$tmpls['single'];
     $p->parent = wire('pages')->get('template=' . self::$tmpls['list']);
-    $p->url = date('Ymd-Hi');
 
     $p->iw_category = $post['category'];
     $p->iw_pubdate = date('Y-m-d H:i');
@@ -101,7 +100,7 @@ class Micropub {
       $coords = preg_match('/(?<=geo:).*(?=;)/', $location, $matches);
 
       if ($coords) {
-        $latLong = implode(',', $matches[0]);
+        $latLong = explode(',', $matches[0]);
         $p->iw_location = 1;
         $p->iw_location_latitude = (float)$latLong[0];
         $p->iw_location_longitude = (float)$latLong[1];
