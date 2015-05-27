@@ -17,9 +17,11 @@
 
 require_once(wire('config')->paths->IndieWeb . 'lib/Micropub.php');
 require_once(wire('config')->paths->IndieWeb . 'lib/PostToTwitter.php');
+require_once(wire('config')->paths->IndieWeb . 'lib/TwitterConnect.php');
 require_once(wire('config')->paths->IndieWeb . 'lib/Webmentions.php');
 use Kfi\IndieWeb\Micropub;
 use Kfi\IndieWeb\PostToTwitter;
+use Kfi\IndieWeb\TwitterConnect;
 use Kfi\IndieWeb\Webmentions;
 
 /**
@@ -174,6 +176,10 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
 
   public function webmention() {
     new Webmentions;
+  }
+
+  public function twitterconnect() {
+    return new TwitterConnect;
   }
 
 
