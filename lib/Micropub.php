@@ -3,6 +3,7 @@
 namespace Kfi\IndieWeb;
 use WireException;
 use WirePermissionException;
+use Page;
 
 class Micropub {
 
