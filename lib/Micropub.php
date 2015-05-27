@@ -119,6 +119,7 @@ class Micropub {
     //
 
     $p->removeStatus(Page::statusUnpublished);
+    $p->title = $p->title . '--' . wire('sanitizer')->pageName(substr($p->iw_content, 0, 10));
     $p->save();
 
     header($_SERVER['SERVER_PROTOCOL'] . ' 201 Created');

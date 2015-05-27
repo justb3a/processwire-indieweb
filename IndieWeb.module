@@ -168,6 +168,15 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'scripts/Geolocation.js');
   }
 
+  public function micropub() {
+    new Micropub;
+  }
+
+  public function webmention() {
+    new Webmentions;
+  }
+
+
   /**
    * Hook
    *
@@ -188,6 +197,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     }
   }
 
+
   /**
    * Hook
    *
@@ -195,18 +205,11 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   public function postingToTwitter(HookEvent $event) {
     $page = $event->arguments(0);
+    $page->title = $page->title . '--' . wire('sanitizer')->pageName(substr($page->iw_content, 0, 10));
 
     if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
       new PostToTwitter($page);
     }
-  }
-
-  public function micropub() {
-    new Micropub;
-  }
-
-  public function webmention() {
-    new Webmentions;
   }
 
   public function getAddress($lat, $lng) {
