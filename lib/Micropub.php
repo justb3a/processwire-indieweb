@@ -3,6 +3,7 @@
 namespace Kfi\IndieWeb;
 use WireException;
 use WirePermissionException;
+use Page;
 
 class Micropub {
 
@@ -89,37 +90,33 @@ class Micropub {
     $p = new \Page();
     $p->template = self::$tmpls['single'];
     $p->parent = wire('pages')->get('template=' . self::$tmpls['list']);
+    $p->name = date('Ymd-Hi');
+    $p->title = $p->name;
 
     $p->iw_category = $post['category'];
     $p->iw_pubdate = date('Y-m-d H:i');
     $p->iw_content = $post['content'];
 
-    if ($post['location']) $p->iw_location = $post['location'];
+    if ($post['location']) {
+      $location = urldecode($post->location);
+      $coords = preg_match('/(?<=geo:).*(?=;)/', $location, $matches);
+
+      if ($coords) {
+        $latLong = explode(',', $matches[0]);
+        $p->iw_location = 1;
+        $p->iw_location_latitude = (float)$latLong[0];
+        $p->iw_location_longitude = (float)$latLong[1];
+      }
+    }
+
     if ($post['place_name']) $p->iw_place_name = $post['place_name'];
 
     $p->addStatus(Page::statusUnpublished);
     $p->save();
 
-    // adding images
-    // $img_path = $_FILES['photo']['tmp_name'];
-    // $img_name = $_FILES['photo']['name'];
-    //
-    // // $_FILES array singular vs. multiple
-    // // normalize by converting single to array prior to looping.
-    // // http://php.net/manual/en/reserved.variables.files.php
-    //
-    // if (!(is_array($img_path))){
-    //   $img_path = array($img_path);
-    //   $img_name = array($img_name);
-    // }
-    //
-    // for ($i=0; $i < count($img_path); $i++){
-    //   $p->images->add($img_path[$i]);
-    // }
-    //
-
     $p->removeStatus(Page::statusUnpublished);
     $p->save();
+
 
     header($_SERVER['SERVER_PROTOCOL'] . ' 201 Created');
     header('Location: ' . $site);

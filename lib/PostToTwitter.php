@@ -47,7 +47,12 @@ class PostToTwitter {
 
     // if coordinates are invalid
     // skip them
-    if (count($result->errors) === 1 && $result->errors[0]->code === 3) {
+    if (
+      $connection->getLastHttpCode() != 200 &&
+      isset($result->errors) &&
+      count($result->errors) === 1 &&
+      $result->errors[0]->code === 3
+    ) {
       unset($params['lat']);
       unset($params['long']);
       unset($params['display_coordinates']);

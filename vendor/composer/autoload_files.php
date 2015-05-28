@@ -6,7 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    $vendorDir . '/tantek/cassis/cassis-loader.php',
     $vendorDir . '/mf2/mf2/Mf2/Parser.php',
+    $vendorDir . '/tantek/cassis/cassis-loader.php',
     $vendorDir . '/indieweb/comments/src/indieweb/comments.php',
 );
