@@ -3,6 +3,7 @@
 namespace Kfi\IndieWeb;
 
 require_once(wire('config')->paths->IndieWeb . 'lib/Author.php');
+use Kfi\IndieWeb\Author;
 use WireException;
 
 class Mention {
@@ -22,10 +23,8 @@ class Mention {
    * @param json $result
    * @param string $pageUrl
    */
-  public function __construct($result, $pageUrl) {
-    $data = json_decode($result);
-
-    if (!is_array($data) or empty($data)) {
+  public function __construct($data, $pageUrl) {
+    if (!is_array($data) || empty($data)) {
       throw new WireException(__('Invalid webmention'));
     }
 
@@ -34,7 +33,7 @@ class Mention {
     }
 
     $this->data = $data;
-    $this->author = new Author($this);
+    // $this->author = new Author($this);
     $this->convertTwitterType();
     $this->getTwitterPostId();
     $this->saveMention($pageUrl);
@@ -81,8 +80,16 @@ class Mention {
    * @param string $pageUrl
    */
   public function saveMention($pageUrl) {
-    $page = wire('pages')->get($pageUrl);
+    // ending slash? remove!
+    $pageUrl = preg_replace('/\/$/', '', $pageUrl);
+    $path = parse_url($pageUrl, PHP_URL_PATH);
+    $pathFragments = explode('/', $path);
+    $end = end($pathFragments);
 
+    $page = wire('pages')->get("name=$end");
+
+    var_dump($this->data);
+    exit;
     // @todo: save mentions
     // create repeater for favorites and reposts
     // create repeater for replys / mentions

@@ -16,11 +16,9 @@
  */
 
 require_once(wire('config')->paths->IndieWeb . 'lib/Micropub.php');
-require_once(wire('config')->paths->IndieWeb . 'lib/PostToTwitter.php');
 require_once(wire('config')->paths->IndieWeb . 'lib/TwitterConnect.php');
 require_once(wire('config')->paths->IndieWeb . 'lib/Webmentions.php');
 use Kfi\IndieWeb\Micropub;
-use Kfi\IndieWeb\PostToTwitter;
 use Kfi\IndieWeb\TwitterConnect;
 use Kfi\IndieWeb\Webmentions;
 
@@ -178,10 +176,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     new Webmentions;
   }
 
-  public function twitterconnect() {
-    return new TwitterConnect;
-  }
-
+  // public function twitterconnect() {
+  //   return new TwitterConnect;
+  // }
 
   /**
    * Hook
@@ -211,10 +208,11 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   public function postingToTwitter(HookEvent $event) {
     $page = $event->arguments(0);
-    $page->title = $page->title . '--' . wire('sanitizer')->pageName(substr($page->iw_content, 0, 10));
+    $short = wire('sanitizer')->pageName(substr($page->iw_content, 0, 10));
+    $page->title = $page->title . '--' . $short;
 
     if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
-      new PostToTwitter($page);
+      new TwitterConnect($page);
     }
   }
 

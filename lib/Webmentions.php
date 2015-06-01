@@ -4,6 +4,7 @@ namespace Kfi\IndieWeb;
 
 require_once(wire('config')->paths->IndieWeb . 'vendor/autoload.php');
 require_once(wire('config')->paths->IndieWeb . 'lib/Mention.php');
+use Kfi\IndieWeb\Mention;
 use WireException;
 
 class Webmentions {
