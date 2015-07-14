@@ -2,8 +2,6 @@
 
 namespace Kfi\IndieWeb;
 
-require_once(wire('config')->paths->IndieWeb . 'lib/Author.php');
-use Kfi\IndieWeb\Author;
 use WireException;
 
 class Mention {
@@ -14,8 +12,9 @@ class Mention {
   const REPOST = 'repost';
   const REPLY = 'reply';
 
+  public static $repeater = 'iw_mentions';
+
   public $data = null;
-  public $author = null;
 
   /**
    * construct
@@ -33,7 +32,6 @@ class Mention {
     }
 
     $this->data = $data;
-    // $this->author = new Author($this);
     $this->convertTwitterType();
     $this->getTwitterPostId();
     $this->saveMention($pageUrl);
@@ -86,13 +84,22 @@ class Mention {
     $pathFragments = explode('/', $path);
     $end = end($pathFragments);
 
+    $date = new \DateTime($this->data['published']);
     $page = wire('pages')->get("name=$end");
+    $newMention = $page->{self::$repeater}->getNew();
 
-    var_dump($this->data);
-    exit;
-    // @todo: save mentions
-    // create repeater for favorites and reposts
-    // create repeater for replys / mentions
+    $newMention->iw_type = $this->data['type'];
+    $newMention->published = $date->format('Y-m-d H:i:s');
+    $newMention->iw_post = $this->data['text'];
+    $newMention->iw_url = $this->data['url'];
+    $newMention->iw_author_name = $this->data['author']['name'];
+    $newMention->iw_author_url = $this->data['author']['url'];
+
+    // save to be able to add images
+    $newMention->save();
+
+    $newMention->iw_author_image->add($this->data['author']['photo']);
+    $newMention->save();
   }
 
 }
