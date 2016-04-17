@@ -1,4 +1,10 @@
-<?php
+<?php namespace ProcessWire;
+
+define('__ROOT__', dirname(__FILE__));
+
+use \IndieWeb\Micropub;
+use \IndieWeb\TwitterConnect;
+use \IndieWeb\Webmentions;
 
 /**
  *
@@ -15,17 +21,14 @@
  * @see http://www.processwire.com
  */
 
-require_once(wire('config')->paths->IndieWeb . 'lib/Micropub.php');
-require_once(wire('config')->paths->IndieWeb . 'lib/TwitterConnect.php');
-require_once(wire('config')->paths->IndieWeb . 'lib/Webmentions.php');
-use Kfi\IndieWeb\Micropub;
-use Kfi\IndieWeb\TwitterConnect;
-use Kfi\IndieWeb\Webmentions;
-
 /**
  * Class IndieWeb
  */
 class IndieWeb extends WireData implements Module, ConfigurableModule {
+
+  const NOTE = 1;
+  const PHOTO = 2;
+  const TWEET = 3;
 
   /**
    * Retrieves module meta data
@@ -73,7 +76,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    * construct - require libs
    */
   public function __construct() {
-    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
+    require_once($this->config->paths->IndieWeb . 'lib/Micropub.php');
+    require_once($this->config->paths->IndieWeb . 'lib/TwitterConnect.php');
+    require_once($this->config->paths->IndieWeb . 'lib/Webmentions.php');
   }
 
   /**
@@ -149,6 +154,8 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    *
    */
   public function init() {
+    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
+
     // set page title to current datetime
     $this->addHookBefore('Inputfield::render', $this, 'renderField');
 
@@ -200,7 +207,6 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     }
   }
 
-
   /**
    * Hook
    *
@@ -211,7 +217,8 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $short = wire('sanitizer')->pageName(substr($page->iw_content, 0, 10));
     $page->title = $page->title . '--' . $short;
 
-    if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
+    $category = (string)$page->iw_category;
+    if (!empty($category) && (int)$category === self::TWEET) {
       new TwitterConnect($page);
     }
   }

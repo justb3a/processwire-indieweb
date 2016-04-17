@@ -1,13 +1,12 @@
-<?php
+<?php namespace IndieWeb;
 
-namespace Kfi\IndieWeb;
+require_once(__ROOT__.'/vendor/autoload.php');
+require_once(__ROOT__.'/lib/Mention.php');
 
-require_once(wire('config')->paths->IndieWeb . 'vendor/autoload.php');
-require_once(wire('config')->paths->IndieWeb . 'lib/Mention.php');
-use Kfi\IndieWeb\Mention;
-use WireException;
+use \IndieWeb\Mention;
+use \ProcessWire\WireException;
 
-class Webmentions {
+class Webmentions extends \ProcessWire\Wire {
 
   public $source = null;
   public $target = null; // own site link
@@ -17,9 +16,9 @@ class Webmentions {
    * construct
    */
   public function __construct() {
-    $post = wire('input')->post;
-    $this->source = wire('sanitizer')->url($post['source']);
-    $this->target = wire('sanitizer')->url($post['target']);
+    $post = $this->wire('input')->post;
+    $this->source = $this->wire('sanitizer')->url($post['source']);
+    $this->target = $this->wire('sanitizer')->url($post['target']);
 
     $this->parseWebmention();
   }
@@ -36,7 +35,7 @@ class Webmentions {
       throw new WireException(__('Invalid target'));
     }
 
-    if (!strpos($this->target, wire('config')->httpHost)) {
+    if (!strpos($this->target, $this->wire('config')->httpHost)) {
       throw new WireException(__('Invalid target'));
     }
 
@@ -46,7 +45,7 @@ class Webmentions {
     }
 
     if (empty($this->result)) {
-      throw new WireException(__('Probably spam'));
+      throw new WireException($this->_('Probably spam'));
     }
 
     $this->registerWebmention();
@@ -63,7 +62,7 @@ class Webmentions {
     }
 
     // redirect to target page
-    wire('session')->redirect($this->target);
+    $this->wire('session')->redirect($this->target);
   }
 
 }

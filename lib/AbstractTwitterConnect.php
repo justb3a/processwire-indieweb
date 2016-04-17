@@ -1,11 +1,9 @@
-<?php
+<?php namespace IndieWeb;
 
-namespace Kfi\IndieWeb;
+require_once(__ROOT__.'/vendor/autoload.php');
+use \Abraham\TwitterOAuth\TwitterOAuth;
 
-require_once(wire('config')->paths->IndieWeb . 'vendor/autoload.php');
-use Abraham\TwitterOAuth\TwitterOAuth;
-
-abstract class AbstractTwitterConnect {
+abstract class AbstractTwitterConnect extends \ProcessWire\Wire {
 
   const CLASS_NAME = 'IndieWeb';
 
@@ -34,7 +32,7 @@ abstract class AbstractTwitterConnect {
   }
 
   protected function setConfigData() {
-    $this->configData = wire('modules')->getModuleConfigData(self::CLASS_NAME);
+    $this->configData = $this->wire('modules')->getModuleConfigData(self::CLASS_NAME);
   }
 
   public function getConfigData() {

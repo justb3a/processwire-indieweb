@@ -1,9 +1,7 @@
-<?php
-
-namespace Kfi\IndieWeb;
-use WireException;
-use WirePermissionException;
-use Page;
+<?php namespace IndieWeb;
+use \ProcessWire\WireException;
+use \ProcessWire\WirePermissionException;
+use \ProcessWire\Page;
 
 class Micropub {
 

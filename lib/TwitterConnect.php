@@ -1,10 +1,11 @@
-<?php
+<?php namespace IndieWeb;
 
-namespace Kfi\IndieWeb;
+require_once(__ROOT__.'/vendor/autoload.php');
+require_once(__ROOT__.'/lib/AbstractTwitterConnect.php');
 
-require_once(wire('config')->paths->IndieWeb . 'lib/AbstractTwitterConnect.php');
-require_once(wire('config')->paths->IndieWeb . 'vendor/autoload.php');
-use Abraham\TwitterOAuth\TwitterOAuth;
+use \ProcessWire;
+use \Abraham\TwitterOAuth\TwitterOAuth;
+use \IndieWeb\AbstractTwitterConnect;
 
 class TwitterConnect extends AbstractTwitterConnect {
 
@@ -18,7 +19,7 @@ class TwitterConnect extends AbstractTwitterConnect {
     $this->setConfigData();
     $this->setConnection();
     $this->doPost();
-    $this->getPost(); // not used atm
+    // $this->getPost(); // not used atm
   }
 
   public function doPost() {
@@ -79,15 +80,18 @@ class TwitterConnect extends AbstractTwitterConnect {
       'statuses/show',
       array('id' => $this->page->iw_twitter_post_id, 'trim_user' => true)
     );
-    $this->setRetweets($result->retweet_count);
-    $this->setFavorites($result->favorite_count);
 
-    if ($result->retweet_count > 0) {
-      $retweeters = $this->getConnection()->get(
-        'statuses/retweets',
-        array('id' => $this->page->iw_twitter_post_id)
-      );
-      $this->setRetweeters($retweeters);
+    if ($result) {
+      $this->setRetweets($result->retweet_count);
+      $this->setFavorites($result->favorite_count);
+
+      if ($result->retweet_count > 0) {
+        $retweeters = $this->getConnection()->get(
+          'statuses/retweets',
+          array('id' => $this->page->iw_twitter_post_id)
+        );
+        $this->setRetweeters($retweeters);
+      }
     }
   }
 

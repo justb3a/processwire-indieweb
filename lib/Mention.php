@@ -1,10 +1,8 @@
-<?php
+<?php namespace IndieWeb;
 
-namespace Kfi\IndieWeb;
+use \ProcessWire\WireException;
 
-use WireException;
-
-class Mention {
+class Mention extends \ProcessWire\Wire {
 
   const TWITTER_LIKE = 'likes this.';
   const TWITTER_REPOST = 'reposts this.';
@@ -24,11 +22,11 @@ class Mention {
    */
   public function __construct($data, $pageUrl) {
     if (!is_array($data) || empty($data)) {
-      throw new WireException(__('Invalid webmention'));
+      throw new WireException($this->_('Invalid webmention'));
     }
 
-    if (empty($data['url'])) {
-      throw new WireException(__('No URL found'));
+    if (!$data['author']['url']) {
+      throw new WireException($this->_('No URL found'));
     }
 
     $this->data = $data;
@@ -85,7 +83,8 @@ class Mention {
     $end = end($pathFragments);
 
     $date = new \DateTime($this->data['published']);
-    $page = wire('pages')->get("name=$end");
+    $page = $this->wire('pages')->get("name=$end");
+
     $newMention = $page->{self::$repeater}->getNew();
 
     $newMention->iw_type = $this->data['type'];
@@ -98,8 +97,10 @@ class Mention {
     // save to be able to add images
     $newMention->save();
 
-    $newMention->iw_author_image->add($this->data['author']['photo']);
-    $newMention->save();
+    if ($this->data['author'] && $this->data['author']['photo']) {
+      $newMention->iw_author_image->add($this->data['author']['photo']);
+      $newMention->save();
+    }
   }
 
 }
