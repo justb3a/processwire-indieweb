@@ -28,15 +28,15 @@ class Webmentions extends \ProcessWire\Wire {
    */
   public function parseWebmention() {
     if (empty($this->source)) {
-      throw new WireException(__('Invalid source'));
+      throw new WireException($this->_('Invalid source'));
     }
 
     if (empty($this->target)) {
-      throw new WireException(__('Invalid target'));
+      throw new WireException($this->_('Invalid target'));
     }
 
     if (!strpos($this->target, $this->wire('config')->httpHost)) {
-      throw new WireException(__('Invalid target'));
+      throw new WireException($this->_('Invalid target'));
     }
 
     $data = \Mf2\fetch($this->source);
@@ -58,7 +58,7 @@ class Webmentions extends \ProcessWire\Wire {
     try {
       new Mention($this->result, $this->target);
     } catch(Exception $e) {
-      throw new WireException(__('Webmention could not be registered'));
+      throw new WireException($this->_('Webmention could not be registered'));
     }
 
     // redirect to target page

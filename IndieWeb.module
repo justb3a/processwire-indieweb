@@ -54,17 +54,6 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   const CLASS_NAME = 'IndieWeb';
 
-  /**
-   * @field array Default config values
-   */
-  protected static $defaults = array(
-    'consumerKey' => '',
-    'consumerSecret' => '',
-    'accessToken' => '',
-    'accessTokenSecret' => '',
-    'twitterHandle' => ''
-  );
-
   protected static $tmpls = array(
     'list' => 'iw_notes',
     'single' => 'iw_note'
@@ -79,64 +68,6 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     require_once($this->config->paths->IndieWeb . 'lib/Micropub.php');
     require_once($this->config->paths->IndieWeb . 'lib/TwitterConnect.php');
     require_once($this->config->paths->IndieWeb . 'lib/Webmentions.php');
-  }
-
-  /**
-   * Retrieves the list of config input fields
-   *
-   * Implementation of the ConfigurableModule interface
-   *
-   * @param array $data The config data
-   * @return InputfieldWrapper
-   * @see http://processwire.com/apigen/class-ConfigurableModule.html
-   */
-  public static function getModuleConfigInputfields(array $data) {
-    $data = array_merge(self::$defaults, $data);
-
-    $fields = new InputfieldWrapper();
-    $modules = wire('modules');
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Consumer Key');
-    $field->attr('name', 'consumerKey');
-    $field->attr('size', 50);
-    $field->attr('value', $data['consumerKey']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Consumer Secret');
-    $field->attr('name', 'consumerSecret');
-    $field->attr('size', 50);
-    $field->attr('value', $data['consumerSecret']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Access Token');
-    $field->attr('name', 'accessToken');
-    $field->attr('size', 50);
-    $field->attr('value', $data['accessToken']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Access Token Secret');
-    $field->attr('name', 'accessTokenSecret');
-    $field->attr('size', 50);
-    $field->attr('value', $data['accessTokenSecret']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Twitter Handle');
-    $field->attr('name', 'twitterHandle');
-    $field->attr('size', 50);
-    $field->attr('value', $data['twitterHandle']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    return $fields;
   }
 
   /**
@@ -236,9 +167,11 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     return $address;
   }
 
-  public function tweetMarkup($tweet) {
+  public function tweetMarkup($tweet, $detectLinks = false) {
     // links
-    $tweet = preg_replace('%\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))%s', '<a href="$1">$1</a>', $tweet);
+    if ($detectLinks) {
+      $tweet = preg_replace('%\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))%s', '<a href="$1">$1</a>', $tweet);
+    }
 
     // hashs
     $tweet = preg_replace('/(^|\s)#(\w*[a-zA-Z_]+\w*)/', '\1<a href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);

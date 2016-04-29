@@ -3,7 +3,7 @@ use \ProcessWire\WireException;
 use \ProcessWire\WirePermissionException;
 use \ProcessWire\Page;
 
-class Micropub {
+class Micropub extends \ProcessWire\Wire {
 
   protected static $tokenEndpoint = 'https://tokens.indieauth.com/token';
 
@@ -17,9 +17,9 @@ class Micropub {
   }
 
   public function start() {
-    $http = wire('config')->https === true ? 'https' : 'http';
-    $site = "$http://" . wire('config')->httpHost . '/';
-    $post = wire('input')->post;
+    $http = $this->wire('config')->https === true ? 'https' : 'http';
+    $site = "$http://" . $this->wire('config')->httpHost . '/';
+    $post = $this->wire('input')->post;
 
     $_HEADERS = array();
     foreach ($this->getallheaders() as $name => $value) {
@@ -28,12 +28,12 @@ class Micropub {
 
     if (!isset($_HEADERS['Authorization'])) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
-      throw new WirePermissionException(__('Missing Authorization header.'));
+      throw new WirePermissionException($this->_('Missing Authorization header.'));
     }
 
     if (!isset($post['h'])) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException(__('Missing *h* value.'));
+      throw new WireException($this->_('Missing *h* value.'));
     }
 
     $options = array(
@@ -58,36 +58,36 @@ class Micropub {
 
     if (!isset($values['me'])) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException(__('Missing *me* value in authentication token.'));
+      throw new WireException($this->_('Missing *me* value in authentication token.'));
     }
 
     if (!isset($values['scope'])) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException(__('Missing *scope* value in authentication token.'));
+      throw new WireException($this->_('Missing *scope* value in authentication token.'));
     }
 
     if (substr($values['me'], -1) != '/') $values['me'] .= '/';
 
     if (strtolower($values['me']) != strtolower($site)) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
-      throw new WirePermissionException(__('Mismatching *me* value in authentication token.'));
+      throw new WirePermissionException($this->_('Mismatching *me* value in authentication token.'));
     }
 
     if (!stristr($values['scope'], 'post')) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
-      throw new WirePermissionException(__('Missing *post* value in *scope*.'));
+      throw new WirePermissionException($this->_('Missing *post* value in *scope*.'));
     }
 
     if (!isset($post['content'])) {
       header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException(__('Missing *content* value.'));
+      throw new WireException($this->_('Missing *content* value.'));
     }
 
     // create new page object and save it to make image fields available for uploading
     // first save page - status unpublished to invoke hook to post to twitter via quill
     $p = new \Page();
     $p->template = self::$tmpls['single'];
-    $p->parent = wire('pages')->get('template=' . self::$tmpls['list']);
+    $p->parent = $this->wire('pages')->get('template=' . self::$tmpls['list']);
     $p->name = date('Ymd-Hi');
     $p->title = $p->name;
 
