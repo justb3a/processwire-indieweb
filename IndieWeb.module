@@ -1,27 +1,34 @@
-<?php
+<?php namespace ProcessWire;
+
+define('__ROOT__', dirname(__FILE__));
+
+use \IndieWeb\Micropub;
+use \IndieWeb\TwitterConnect;
+use \IndieWeb\Webmentions;
 
 /**
  *
  * See README.md for usage instructions.
  *
- * ProcessWire 2.x
+ * ProcessWire 3.x
  * Licensed under GNU/GPL v2, see LICENSE.TXT
  *
  *
  * @author Tabea David <td@kf-interactive.com>
- * @version 0.0.1
+ * @version 0.0.2
  * @copyright Copyright (c) 2015 KF Interactive, www.kf-interactive.com, <info@kf-interactive.com>
  * @see https://github.com/justonestep/processwire-indieweb
  * @see http://www.processwire.com
  */
 
-require "vendor/autoload.php";
-use Abraham\TwitterOAuth\TwitterOAuth;
-
 /**
  * Class IndieWeb
  */
 class IndieWeb extends WireData implements Module, ConfigurableModule {
+
+  const NOTE = 1;
+  const PHOTO = 2;
+  const TWEET = 3;
 
   /**
    * Retrieves module meta data
@@ -34,7 +41,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     return array(
       'title' => 'Indie Web',
       'summary' => 'This module provides an easy way to add a basic twitter connection to your site.',
-      'version' => 1,
+      'version' => 2,
       'href' => 'https://github.com/justonestep/processwire-indieweb',
       'singular' => true,
       'autoload' => true,
@@ -47,81 +54,20 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   const CLASS_NAME = 'IndieWeb';
 
-  /**
-   * @field array Default config values
-   */
-  protected static $defaults = array(
-    'consumerKey' => '',
-    'consumerSecret' => '',
-    'accessToken' => '',
-    'accessTokenSecret' => '',
-    'twitterHandle' => ''
-  );
-
   protected static $tmpls = array(
     'list' => 'iw_notes',
     'single' => 'iw_note'
   );
 
-  protected static $tokenEndpoint = 'https://tokens.indieauth.com/token';
   protected static $geocodeEndpoint = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&sensor=false';
 
   /**
-   * Retrieves the list of config input fields
-   *
-   * Implementation of the ConfigurableModule interface
-   *
-   * @param array $data The config data
-   * @return InputfieldWrapper
-   * @see http://processwire.com/apigen/class-ConfigurableModule.html
+   * construct - require libs
    */
-  public static function getModuleConfigInputfields(array $data) {
-    $data = array_merge(self::$defaults, $data);
-
-    $fields = new InputfieldWrapper();
-    $modules = wire('modules');
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Consumer Key');
-    $field->attr('name', 'consumerKey');
-    $field->attr('size', 50);
-    $field->attr('value', $data['consumerKey']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Consumer Secret');
-    $field->attr('name', 'consumerSecret');
-    $field->attr('size', 50);
-    $field->attr('value', $data['consumerSecret']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Access Token');
-    $field->attr('name', 'accessToken');
-    $field->attr('size', 50);
-    $field->attr('value', $data['accessToken']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Access Token Secret');
-    $field->attr('name', 'accessTokenSecret');
-    $field->attr('size', 50);
-    $field->attr('value', $data['accessTokenSecret']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    $field = $modules->get('InputfieldText');
-    $field->label = __('Twitter Handle');
-    $field->attr('name', 'twitterHandle');
-    $field->attr('size', 50);
-    $field->attr('value', $data['twitterHandle']);
-    $field->columnWidth = '50';
-    $fields->append($field);
-
-    return $fields;
+  public function __construct() {
+    require_once($this->config->paths->IndieWeb . 'lib/Micropub.php');
+    require_once($this->config->paths->IndieWeb . 'lib/TwitterConnect.php');
+    require_once($this->config->paths->IndieWeb . 'lib/Webmentions.php');
   }
 
   /**
@@ -145,7 +91,10 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $this->addHookBefore('Inputfield::render', $this, 'renderField');
 
     // post to twitter
-    $this->addHookBefore('Pages::published', $this, 'postToTwitter');
+    $this->addHookBefore('Pages::published', $this, 'postingToTwitter');
+
+    // send webmention
+    $this->addHookBefore('Pages::saved', $this, 'sendWebmention');
 
     // add geolocation to determine lat and long
     $this->addHookAfter('ProcessPageEdit::execute', $this, 'addGeolocation');
@@ -157,8 +106,31 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    * @param HookEvent $event
    */
   public function addGeolocation(HookEvent $event) {
-    $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'Geolocation.js');
+    $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'scripts/Geolocation.js');
   }
+
+  public function micropub() {
+    new Micropub;
+  }
+
+  public function parseWebmention() {
+    $source = $this->wire('sanitizer')->url($this->input->post['source']);
+    $target = $this->wire('sanitizer')->url($this->input->post['target']);
+    $newWebmention = new Webmentions($source, $target);
+    $newWebmention->parseWebmention();
+  }
+
+  public function sendWebmention(HookEvent $event) {
+    $page = $event->arguments(0);
+    $source = '';
+    $target = '';
+    $newWebmention = new Webmentions($source, $target);
+    $newWebmention->sendWebmention($page);
+  }
+
+  // public function twitterconnect() {
+  //   return new TwitterConnect;
+  // }
 
   /**
    * Hook
@@ -185,161 +157,15 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    *
    * @param HookEvent $event
    */
-  public function postToTwitter(HookEvent $event) {
+  public function postingToTwitter(HookEvent $event) {
     $page = $event->arguments(0);
+    $short = wire('sanitizer')->pageName(substr($page->iw_content, 0, 10));
+    $page->title = $page->title . '--' . $short;
 
-    if (!empty($page->iw_category) && $page->iw_category === 'tweet') {
-      $result = $this->doPostToTwitter($page);
-
-      if (is_object($result) && !empty($result->id_str)) {
-        $page->iw_twitter_post_id = $result->id_str;
-        $page->save();
-      }
+    $category = (string)$page->iw_category;
+    if (!empty($category) && (int)$category === self::TWEET) {
+      new TwitterConnect($page);
     }
-  }
-
-  public function doPostToTwitter($page) {
-    $connection = new TwitterOAuth($this->consumerKey, $this->consumerSecret, $this->accessToken, $this->accessTokenSecret);
-
-    $medias = array();
-    foreach ($page->iw_images as $img) {
-      $media = $connection->upload('media/upload', array('media' => $img->filename));
-      $medias[] = $media->media_id_string;
-    }
-
-    $params = array(
-      'status' => $page->iw_content,
-    );
-
-    if (count($medias)) $params['media_ids'] = implode(',', $medias);
-
-    if (!empty($page->iw_location_latitude) && !empty($page->iw_location_longitude)) {
-      $params['lat'] = (float)$page->iw_location_latitude;
-      $params['long'] = (float)$page->iw_location_longitude;
-      $params['display_coordinates'] = true;
-    }
-
-    $result = $connection->post("statuses/update", $params);
-    if ($connection->getLastHttpCode() != 200) $result = '';
-
-    return $result;
-  }
-
-  public function micropub() {
-    $site = 'http://' . wire('config')->httpHost . '/';
-    $post = wire('input')->post;
-
-    $_HEADERS = array();
-    foreach ($this->getallheaders() as $name => $value) {
-      $_HEADERS[$name] = $value;
-    }
-
-    if (!isset($_HEADERS['Authorization'])) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 401 Unauthorized');
-      throw new WirePermissionException($this->_('Missing Authorization header.'));
-    }
-    if (!isset($post['h'])) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException($this->_('Missing *h* value.'));
-    }
-
-    $options = array(
-      CURLOPT_URL => self::$tokenEndpoint,
-      CURLOPT_HTTPGET => TRUE,
-      CURLOPT_USERAGENT => $site,
-      CURLOPT_TIMEOUT => 5,
-      CURLOPT_RETURNTRANSFER => TRUE,
-      CURLOPT_HEADER => FALSE,
-      CURLOPT_HTTPHEADER => array(
-        'Content-type: application/x-www-form-urlencoded',
-        'Authorization: '.$_HEADERS['Authorization']
-      )
-    );
-
-    $curl = curl_init();
-    curl_setopt_array($curl, $options);
-    $source = curl_exec($curl);
-    curl_close($curl);
-
-    parse_str($source, $values);
-
-    if (!isset($values['me'])) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException($this->_('Missing *me* value in authentication token.'));
-    }
-
-    if (!isset($values['scope'])) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException($this->_('Missing *scope* value in authentication token.'));
-    }
-
-    if (substr($values['me'], -1) != '/') $values['me'] .= '/';
-
-    if (strtolower($values['me']) != strtolower($site)) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
-      throw new WirePermissionException($this->_('Mismatching *me* value in authentication token.'));
-    }
-
-    if (!stristr($values['scope'], 'post')) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
-      throw new WirePermissionException($this->_('Missing *post* value in *scope*.'));
-    }
-
-    if (!isset($post['content'])) {
-      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      throw new WireException($this->_('Missing *content* value.'));
-    }
-
-    // create new page object and save it to make image fields available for uploading
-    // first save page - status unpublished to invoke hook to post to twitter via quill
-    $p = new \Page();
-    $p->template = self::$tmpls['single'];
-    $p->parent = wire('pages')->get('template=' . self::$tmpls['list']);
-
-    $p->iw_category = $post['category'];
-    $p->iw_pubdate = date('Y-m-d H:i');
-    $p->iw_content = $post['content'];
-
-    if ($post['location']) $p->iw_location = $post['location'];
-    if ($post['place_name']) $p->iw_place_name = $post['place_name'];
-
-    $p->addStatus(Page::statusUnpublished);
-    $p->save();
-
-    // adding images
-    // $img_path = $_FILES['photo']['tmp_name'];
-    // $img_name = $_FILES['photo']['name'];
-    //
-    // // $_FILES array singular vs. multiple
-    // // normalize by converting single to array prior to looping.
-    // // http://php.net/manual/en/reserved.variables.files.php
-    //
-    // if (!(is_array($img_path))){
-    //   $img_path = array($img_path);
-    //   $img_name = array($img_name);
-    // }
-    //
-    // for ($i=0; $i < count($img_path); $i++){
-    //   $p->images->add($img_path[$i]);
-    // }
-    //
-
-    $p->removeStatus(Page::statusUnpublished);
-    $p->save();
-
-
-    header($_SERVER['SERVER_PROTOCOL'] . ' 201 Created');
-    header('Location: ' . $site);
-  }
-
-  public function getallheaders() {
-    $headers = '';
-    foreach ($_SERVER as $name => $value) {
-      if (substr($name, 0, 5) == 'HTTP_') {
-        $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-      }
-    }
-    return $headers;
   }
 
   public function getAddress($lat, $lng) {
@@ -348,16 +174,16 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $json = file_get_contents($url);
     $data = json_decode($json);
 
-    if ($data->status === 'OK') {
-      $address = $data->results[3]->formatted_address;
-    }
+    if ($data->status === 'OK') $address = $data->results[3]->formatted_address;
 
     return $address;
   }
 
-  public function tweetMarkup($tweet) {
+  public function tweetMarkup($tweet, $detectLinks = false) {
     // links
-    $tweet = preg_replace('%\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))%s', '<a href="$1">$1</a>', $tweet);
+    if ($detectLinks) {
+      $tweet = preg_replace('%\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))%s', '<a href="$1">$1</a>', $tweet);
+    }
 
     // hashs
     $tweet = preg_replace('/(^|\s)#(\w*[a-zA-Z_]+\w*)/', '\1<a href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
@@ -366,5 +192,31 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $tweet = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $tweet);
 
     return $tweet;
+  }
+
+  /**
+  * Crop a text
+  *
+  * @param string $str
+  * @param int $maxlen
+  * @return string
+  */
+  public function truncateContent($str, $maxlen = 450) {
+    if (strlen($str) > $maxlen) {
+      $str = substr($str, 0, $maxlen);
+
+      if (!preg_match('/[!?.]/', substr($str, -1, 1))) {
+        preg_match_all('/[!?.]/', $str, $matches, PREG_OFFSET_CAPTURE);
+        $end = end($matches[0])[1];
+
+        if (!empty($end)) {
+          $str = substr($str, 0, end($matches[0])[1] + 1);
+        } elseif (substr($str, -1, 1) != ' ') {
+          $str = substr($str, 0, strrpos($str, ' '));
+        }
+      }
+    }
+
+    return trim($str);
   }
 }
