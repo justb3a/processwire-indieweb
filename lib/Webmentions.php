@@ -79,8 +79,8 @@ class Webmentions extends \ProcessWire\Wire {
   }
 
   public function sendWebmention() {
-    $html = $this->modules->get('TextformatterMarkdownExtra')->markdown($httpPage->iw_content);
-    $sourceURL = $httpPage->httpUrl;
+    $html = $this->modules->get('TextformatterMarkdownExtra')->markdown($this->httpPage->iw_content);
+    $sourceURL = $this->httpPage->httpUrl;
 
     $client = new \IndieWeb\MentionClient();
     $urls = $client->findOutgoingLinks($html);
