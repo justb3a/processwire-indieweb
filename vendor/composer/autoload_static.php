@@ -7,8 +7,8 @@ namespace Composer\Autoload;
 class ComposerStaticInit22612f9751aeb4dffbcd2b24d51f9fe0
 {
     public static $files = array (
-        '8ee931a05e458224742424e2592b71cf' => __DIR__ . '/..' . '/tantek/cassis/cassis-loader.php',
         '757772e28a0943a9afe83def8db95bdf' => __DIR__ . '/..' . '/mf2/mf2/Mf2/Parser.php',
+        '8ee931a05e458224742424e2592b71cf' => __DIR__ . '/..' . '/tantek/cassis/cassis-loader.php',
         '641f81555eb3c036cedc0da892fa5303' => __DIR__ . '/..' . '/indieweb/comments/src/indieweb/comments.php',
     );
 
@@ -26,11 +26,22 @@ class ComposerStaticInit22612f9751aeb4dffbcd2b24d51f9fe0
         ),
     );
 
+    public static $prefixesPsr0 = array (
+        'I' => 
+        array (
+            'IndieWeb' => 
+            array (
+                0 => __DIR__ . '/..' . '/indieweb/mention-client/src',
+            ),
+        ),
+    );
+
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInit22612f9751aeb4dffbcd2b24d51f9fe0::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit22612f9751aeb4dffbcd2b24d51f9fe0::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit22612f9751aeb4dffbcd2b24d51f9fe0::$prefixesPsr0;
 
         }, null, ClassLoader::class);
     }

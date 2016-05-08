@@ -9,18 +9,15 @@ use \ProcessWire\WireException;
 class Webmentions extends \ProcessWire\Wire {
 
   public $source = null;
-  public $target = null; // own site link
+  public $target = null;
   public $result = '';
 
   /**
    * construct
    */
-  public function __construct() {
-    $post = $this->wire('input')->post;
-    $this->source = $this->wire('sanitizer')->url($post['source']);
-    $this->target = $this->wire('sanitizer')->url($post['target']);
-
-    $this->parseWebmention();
+  public function __construct($source, $target) {
+    $this->source = $source;
+    $this->target = $target;
   }
 
   /**
@@ -41,7 +38,14 @@ class Webmentions extends \ProcessWire\Wire {
 
     $data = \Mf2\fetch($this->source);
     if (count($data['items'])) {
-      $this->result = \IndieWeb\comments\parse($data['items'][0], $this->source);
+      $dataItem = $data['items'][0];
+      foreach ($data['items'] as $item) {
+        if ($item['type'][0] === 'h-entry' || $item['type'][0] === 'p-entry') {
+          $dataItem = $item;
+        }
+      }
+
+      $this->result = \IndieWeb\comments\parse($dataItem, $this->source);
     }
 
     if (empty($this->result)) {
@@ -63,6 +67,22 @@ class Webmentions extends \ProcessWire\Wire {
 
     // redirect to target page
     $this->wire('session')->redirect($this->target);
+  }
+
+  public function sendWebmention($page) {
+    $html = $this->modules->get('TextformatterMarkdownExtra')->markdown($page->iw_content);
+    $sourceURL = $page->httpUrl;
+
+    $client = new \IndieWeb\MentionClient();
+    $urls = $client->findOutgoingLinks($html);
+
+    foreach ($urls as $targetURL) {
+      $endpoint = $client->discoverWebmentionEndpoint($targetURL);
+      if ($endpoint) {
+        $result = $client->sendWebmention($sourceURL, $targetURL);
+        $this->wire("log")->message("IndieWeb: sourceURL: $sourceURL, targetURL: $targetURL, result: " . json_encode($result));
+      }
+    }
   }
 
 }

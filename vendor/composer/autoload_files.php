@@ -6,7 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    '8ee931a05e458224742424e2592b71cf' => $vendorDir . '/tantek/cassis/cassis-loader.php',
     '757772e28a0943a9afe83def8db95bdf' => $vendorDir . '/mf2/mf2/Mf2/Parser.php',
+    '8ee931a05e458224742424e2592b71cf' => $vendorDir . '/tantek/cassis/cassis-loader.php',
     '641f81555eb3c036cedc0da892fa5303' => $vendorDir . '/indieweb/comments/src/indieweb/comments.php',
 );

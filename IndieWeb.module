@@ -10,7 +10,7 @@ use \IndieWeb\Webmentions;
  *
  * See README.md for usage instructions.
  *
- * ProcessWire 2.x
+ * ProcessWire 3.x
  * Licensed under GNU/GPL v2, see LICENSE.TXT
  *
  *
@@ -93,6 +93,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     // post to twitter
     $this->addHookBefore('Pages::published', $this, 'postingToTwitter');
 
+    // send webmention
+    $this->addHookBefore('Pages::saved', $this, 'sendWebmention');
+
     // add geolocation to determine lat and long
     $this->addHookAfter('ProcessPageEdit::execute', $this, 'addGeolocation');
   }
@@ -110,8 +113,19 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     new Micropub;
   }
 
-  public function webmention() {
-    new Webmentions;
+  public function parseWebmention() {
+    $source = $this->wire('sanitizer')->url($this->input->post['source']);
+    $target = $this->wire('sanitizer')->url($this->input->post['target']);
+    $newWebmention = new Webmentions($source, $target);
+    $newWebmention->parseWebmention();
+  }
+
+  public function sendWebmention(HookEvent $event) {
+    $page = $event->arguments(0);
+    $source = '';
+    $target = '';
+    $newWebmention = new Webmentions($source, $target);
+    $newWebmention->sendWebmention($page);
   }
 
   // public function twitterconnect() {
@@ -160,9 +174,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $json = file_get_contents($url);
     $data = json_decode($json);
 
-    if ($data->status === 'OK') {
-      $address = $data->results[3]->formatted_address;
-    }
+    if ($data->status === 'OK') $address = $data->results[3]->formatted_address;
 
     return $address;
   }
@@ -180,5 +192,31 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $tweet = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $tweet);
 
     return $tweet;
+  }
+
+  /**
+  * Crop a text
+  *
+  * @param string $str
+  * @param int $maxlen
+  * @return string
+  */
+  public function truncateContent($str, $maxlen = 450) {
+    if (strlen($str) > $maxlen) {
+      $str = substr($str, 0, $maxlen);
+
+      if (!preg_match('/[!?.]/', substr($str, -1, 1))) {
+        preg_match_all('/[!?.]/', $str, $matches, PREG_OFFSET_CAPTURE);
+        $end = end($matches[0])[1];
+
+        if (!empty($end)) {
+          $str = substr($str, 0, end($matches[0])[1] + 1);
+        } elseif (substr($str, -1, 1) != ' ') {
+          $str = substr($str, 0, strrpos($str, ' '));
+        }
+      }
+    }
+
+    return trim($str);
   }
 }

@@ -34,34 +34,12 @@ class TwitterConnect extends AbstractTwitterConnect {
     // $this->getPost(); // not used atm
   }
 
-  /**
-  * Crop a text
-  *
-  * @param string $str
-  * @param int $maxlen
-  * @return string
-  */
-  public function truncate_str($str, $maxlen = 450) {
-    if (strlen($str) > $maxlen) {
-      $str = substr($str, 0, $maxlen);
-
-      if (!preg_match('/[!?.]/', substr($str, -1, 1))) {
-        preg_match_all('/[!?.]/', $str, $matches, PREG_OFFSET_CAPTURE);
-        $end = end($matches[0])[1];
-
-        if (!empty($end)) {
-          $str = substr($str, 0, end($matches[0])[1] + 1);
-        } elseif (substr($str, -1, 1) != ' ') {
-          $str = substr($str, 0, strrpos($str, ' '));
-        }
-      }
-    }
-
-    return trim($str);
-  }
-
   private function getPostContent() {
-    $content = $this->page->iw_content;
+    // "remove" markdown tags
+    // therefore parse markdown first, then strip tags
+    $content = strip_tags($this->modules->get('TextformatterMarkdownExtra')->markdown($this->page->iw_content));
+
+    $tags = $this->page->iw_tags ? " {$this->page->iw_tags}" : $this->page->iw_tags;
     $contentLength = strlen($content);
 
     // get all links, get the length and substitute with TWITTER_LENGHT_LINK
@@ -79,27 +57,29 @@ class TwitterConnect extends AbstractTwitterConnect {
     }
 
     $append = "... ({$this->page->httpUrl})";
-    $appendLength = self::TWEET_LINK_LENGTH + strlen('... ()');
+    $appendLength = self::TWEET_LINK_LENGTH + strlen('... ()') + strlen($tags);
 
     // shortn tweet if necessary
     if ($appendLength + $contentLength > self::TWEET_LENGTH) {
-      $content = $this->truncate_str($this->page->iw_content, self::TWEET_LENGTH - $appendLength);
+      $content = $this->modules->get('IndieWeb')->truncateContent($content, self::TWEET_LENGTH - $appendLength);
     } else {
       $append = substr($append, 3); // remove ...
     }
 
-    return $content . $append;
+    return $content . $append . $tags;
   }
 
   public function doPost() {
     $medias = array();
     foreach ($this->page->iw_images as $img) {
-      $media = $this->getConnection()->upload(
-        'media/upload',
-        array('media' => $img->filename)
-      );
-      $medias[] = $media->media_id_string;
+      var_dump($img->filename);
+      // $media = $this->getConnection()->upload(
+      //   'media/upload',
+      //   array('media' => $img->filename)
+      // );
+      // $medias[] = $media->media_id_string;
     }
+    exit;
 
     $params = array('status' => $this->getPostContent());
 
