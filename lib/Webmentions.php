@@ -10,14 +10,16 @@ class Webmentions extends \ProcessWire\Wire {
 
   public $source = null;
   public $target = null;
+  public $httpPage = null;
   public $result = '';
 
   /**
    * construct
    */
-  public function __construct($source, $target) {
+  public function __construct($source, $target, $httpPage = null) {
     $this->source = $source;
     $this->target = $target;
+    $this->httpPage = $httpPage ? $httpPage : $this->page;
   }
 
   /**
@@ -39,28 +41,35 @@ class Webmentions extends \ProcessWire\Wire {
     $data = \Mf2\fetch($this->source);
     if (count($data['items'])) {
       $dataItem = $data['items'][0];
+
       foreach ($data['items'] as $item) {
         if ($item['type'][0] === 'h-entry' || $item['type'][0] === 'p-entry') {
           $dataItem = $item;
         }
       }
 
+      // check whether the webmention also contains a "like"
+      $doubleTheLike = false;
+      if (array_key_exists('like-of', $dataItem['properties'])) {
+        if (in_array($this->target, $dataItem['properties']['like-of'])) {
+          $doubleTheLike = true;
+        }
+      }
+
       $this->result = \IndieWeb\comments\parse($dataItem, $this->source);
     }
 
-    if (empty($this->result)) {
-      throw new WireException($this->_('Probably spam'));
-    }
+    if (empty($this->result)) throw new WireException($this->_('Probably spam'));
 
-    $this->registerWebmention();
+    $this->registerWebmention($doubleTheLike);
   }
 
   /**
    * register new webmention
    */
-  public function registerWebmention() {
+  public function registerWebmention($doubleTheLike) {
     try {
-      new Mention($this->result, $this->target);
+      new Mention($this->result, $this->target, $doubleTheLike);
     } catch(Exception $e) {
       throw new WireException($this->_('Webmention could not be registered'));
     }
@@ -69,9 +78,9 @@ class Webmentions extends \ProcessWire\Wire {
     $this->wire('session')->redirect($this->target);
   }
 
-  public function sendWebmention($page) {
-    $html = $this->modules->get('TextformatterMarkdownExtra')->markdown($page->iw_content);
-    $sourceURL = $page->httpUrl;
+  public function sendWebmention() {
+    $html = $this->modules->get('TextformatterMarkdownExtra')->markdown($httpPage->iw_content);
+    $sourceURL = $httpPage->httpUrl;
 
     $client = new \IndieWeb\MentionClient();
     $urls = $client->findOutgoingLinks($html);
