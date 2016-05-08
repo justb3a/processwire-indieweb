@@ -20,7 +20,7 @@ class Mention extends \ProcessWire\Wire {
    * @param json $result
    * @param string $pageUrl
    */
-  public function __construct($data, $pageUrl) {
+  public function __construct($data, $pageUrl, $doubleTheLike) {
     if (!is_array($data) || empty($data)) {
       throw new WireException($this->_('Invalid webmention'));
     }
@@ -33,6 +33,11 @@ class Mention extends \ProcessWire\Wire {
     $this->convertTwitterType();
     $this->getTwitterPostId();
     $this->saveMention($pageUrl);
+
+    if ($this->data['type'] !== self::LIKE && $doubleTheLike) {
+      $this->data['type'] = self::LIKE;
+      $this->saveMention($pageUrl);
+    }
   }
 
   /**
@@ -109,6 +114,7 @@ class Mention extends \ProcessWire\Wire {
       $mention->save();
 
       if ($this->data['author'] && $this->data['author']['photo']) {
+        $mention->iw_author_image->deleteAll();
         $mention->iw_author_image = $this->data['author']['photo'];
         $mention->save();
       }
