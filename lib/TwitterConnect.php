@@ -72,14 +72,12 @@ class TwitterConnect extends AbstractTwitterConnect {
   public function doPost() {
     $medias = array();
     foreach ($this->page->iw_images as $img) {
-      var_dump($img->filename);
-      // $media = $this->getConnection()->upload(
-      //   'media/upload',
-      //   array('media' => $img->filename)
-      // );
-      // $medias[] = $media->media_id_string;
+      $media = $this->getConnection()->upload(
+        'media/upload',
+        array('media' => $img->filename)
+      );
+      $medias[] = $media->media_id_string;
     }
-    exit;
 
     $params = array('status' => $this->getPostContent());
 
