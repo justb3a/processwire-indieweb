@@ -24,7 +24,10 @@ class Config
     /** @var string User-Agent header */
     protected $userAgent = 'TwitterOAuth (+https://twitteroauth.com)';
     /** @var array Store proxy connection details */
-    protected $proxy = array();
+    protected $proxy = [];
+
+    /** @var bool Whether to encode the curl requests with gzip or not */
+    protected $gzipEncoding = true;
 
     /**
      * Set the connection and response timeouts.
@@ -60,5 +63,15 @@ class Config
     public function setProxy(array $proxy)
     {
         $this->proxy = $proxy;
+    }
+
+    /**
+     * Whether to encode the curl requests with gzip or not.
+     *
+     * @param boolean $gzipEncoding
+     */
+    public function setGzipEncoding($gzipEncoding)
+    {
+        $this->gzipEncoding = (bool)$gzipEncoding;
     }
 }
