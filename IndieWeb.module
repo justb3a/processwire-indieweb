@@ -15,7 +15,7 @@ use \IndieWeb\Webmentions;
  *
  *
  * @author Tabea David <td@kf-interactive.com>
- * @version 0.0.1
+ * @version 0.0.2
  * @copyright Copyright (c) 2015 KF Interactive, www.kf-interactive.com, <info@kf-interactive.com>
  * @see https://github.com/justonestep/processwire-indieweb
  * @see http://www.processwire.com
@@ -41,7 +41,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     return array(
       'title' => 'Indie Web',
       'summary' => 'This module provides an easy way to add a basic twitter connection to your site.',
-      'version' => 1,
+      'version' => 2,
       'href' => 'https://github.com/justonestep/processwire-indieweb',
       'singular' => true,
       'autoload' => true,
