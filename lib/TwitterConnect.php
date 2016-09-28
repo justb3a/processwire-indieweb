@@ -20,6 +20,13 @@ class TwitterConnect extends AbstractTwitterConnect {
   const TWEET_LENGTH = 140;
 
   /**
+   * integer media length
+   * https://dev.twitter.com/rest/reference/get/help/configuration
+   * "characters_reserved_per_media": 24
+   */
+  const MEDIA_LENGTH = 24;
+
+  /**
    * integer Tweet link length
    * A URL of any length will be altered to 23 characters, even if the link itself is less than 23 characters long
    * more: https://support.twitter.com/articles/78124
@@ -56,6 +63,12 @@ class TwitterConnect extends AbstractTwitterConnect {
       $contentLength = $contentLength - $linkLength + count($matches[0]) * self::TWEET_LINK_LENGTH;
     }
 
+    // if a media is attached, substract characters reserved per media
+    if (count($this->page->iw_images)) {
+      // @todo: check for multiple images
+      $contentLength = $contentLength + self::MEDIA_LENGTH;
+    }
+
     $append = "... ({$this->page->httpUrl})";
     $appendLength = self::TWEET_LINK_LENGTH + strlen('... ()') + strlen($tags);
 
@@ -79,7 +92,9 @@ class TwitterConnect extends AbstractTwitterConnect {
       $medias[] = $media->media_id_string;
     }
 
-    $params = array('status' => $this->getPostContent());
+    $post = $this->getPostContent();
+    $params = array('status' => $post);
+    $this->wire('log')->message('IndieWeb: ' . json_encode($post));
 
     if (count($medias)) $params['media_ids'] = implode(',', $medias);
 
@@ -93,6 +108,7 @@ class TwitterConnect extends AbstractTwitterConnect {
     }
 
     $result = $this->getConnection()->post('statuses/update', $params);
+    $this->wire('log')->message('IndieWeb: ' . json_encode($result));
 
     // if coordinates are invalid – skip them
     if (

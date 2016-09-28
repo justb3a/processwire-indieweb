@@ -45,7 +45,7 @@ class CombinedMicroformatsTest extends PHPUnit_Framework_TestCase {
 			"start": ["2012-06-30"],
 			"end": ["2012-07-01"],
 			"location": [{
-				"value": "Geoloqi, 920 SW 3rd Ave. Suite 400, Portland, OR",
+				"value": "Geoloqi",
 				"type": ["h-card"],
 				"properties": {
 					"name": ["Geoloqi"],
@@ -219,5 +219,84 @@ class CombinedMicroformatsTest extends PHPUnit_Framework_TestCase {
 		
 		$this->assertCount(1, $mf['items'][0]['properties']['like-of']);
 		$this->assertCount(1, $mf['items'][0]['properties']['in-reply-to']);
+	}
+	
+	/**
+	 * Test microformats nested under e-* property classnames retain html: key in structure
+	 * 
+	 * @see https://github.com/indieweb/php-mf2/issues/64
+	 */
+	public function testMicroformatsNestedUnderEPropertyClassnamesRetainHtmlKey() {
+		$input = '<div class="h-entry"><div class="h-card e-content"><p>Hello</p></div></div>';
+		$mf = Mf2\parse($input);
+		
+		$this->assertEquals($mf['items'][0]['properties']['content'][0]['html'], '<p>Hello</p>');
+	}
+	
+	/**
+	 * Test microformats nested under u-* property classnames derive value: key from parsing as u-*
+	 */
+	public function testMicroformatsNestedUnderUPropertyClassnamesDeriveValueCorrectly() {
+		$input = '<div class="h-entry"><img class="u-url h-card" alt="This should not be the value" src="This should be the value" /></div>';
+		$mf = Mf2\parse($input);
+		
+		$this->assertEquals($mf['items'][0]['properties']['url'][0]['value'], 'This should be the value');
+	}
+
+	public function testMicroformatsNestedUnderUPropertyClassnamesDeriveValueFromURL() {
+		$input = '<div class="h-entry">
+		  <h1 class="p-name">Name</h1>
+		  <p class="e-content">Hello World</p>
+		  <ul>
+		    <li class="u-comment h-cite">
+		    	<a class="u-author h-card" href="http://jane.example.com/">Jane Bloggs</a>
+		    	<p class="p-content p-name">lol</p>
+		    	<a class="u-url" href="http://example.org/post1234"><time class="dt-published">2015-07-12 12:03</time></a>
+		    </li>
+		  </ul>
+		</div>';
+		$expected = '{
+		  "items": [{
+    	  "type": ["h-entry"],
+	      "properties": {
+	        "name": ["Name"],
+	        "content": [{
+	          "html": "Hello World",
+	          "value": "Hello World"
+	        }],
+	        "comment": [{
+            "type": ["h-cite"],
+            "properties": {
+              "author": [{
+                "type": ["h-card"],
+                "properties": {
+                  "name": ["Jane Bloggs"],
+                  "url": ["http:\/\/jane.example.com\/"]
+                },
+                "value": "http:\/\/jane.example.com\/"
+              }],
+              "content": ["lol"],
+              "name": ["lol"],
+              "url": ["http:\/\/example.org\/post1234"],
+              "published": ["2015-07-12 12:03"]
+            },
+            "value": "http:\/\/example.org\/post1234"
+          }]
+	      }
+	    }],
+	    "rels":[]
+	  }';
+	  	$mf = Mf2\parse($input);
+
+		$this->assertJsonStringEqualsJsonString(json_encode($mf), $expected);
+		$this->assertEquals($mf['items'][0]['properties']['comment'][0]['value'], 'http://example.org/post1234');
+		$this->assertEquals($mf['items'][0]['properties']['comment'][0]['properties']['author'][0]['value'], 'http://jane.example.com/');
+	}
+	
+	public function testMicroformatsNestedUnderPPropertyClassnamesDeriveValueFromFirstPName() {
+		$input = '<div class="h-entry"><div class="p-author h-card">This post was written by <span class="p-name">Zoe</span>.</div></div>';
+		$mf = Mf2\parse($input);
+		
+		$this->assertEquals($mf['items'][0]['properties']['author'][0]['value'], 'Zoe');
 	}
 }

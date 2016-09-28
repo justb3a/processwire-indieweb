@@ -46,15 +46,17 @@ class Mention extends \ProcessWire\Wire {
   public function convertTwitterType() {
     $this->wire('log')->message('IndieWeb: ' . json_encode($this->data));
 
-    if (
-      preg_match('/https:\/\/twitter.com\/(.*?)\/status\/\d*#favorited-by-\d*$/', $this->data['url'])
-      || !$this->data['text']
-    ) {
-      $this->data['type'] = self::LIKE;
-    } elseif (preg_match('/^RT\s/', $this->data['text'])) {
-      $this->data['type'] = self::REPOST;
-    } else {
-      $this->data['type'] = self::MENTION;
+    if (preg_match('/https:\/\/twitter.com\//', $this->data['url'])) {
+      if (
+        preg_match('/https:\/\/twitter.com\/(.*?)\/status\/\d*#favorited-by-\d*$/', $this->data['url'])
+        || !$this->data['text']
+      ) {
+        $this->data['type'] = self::LIKE;
+      } elseif (preg_match('/^RT\s/', $this->data['text'])) {
+        $this->data['type'] = self::REPOST;
+      } else {
+        $this->data['type'] = self::MENTION;
+      }
     }
   }
 

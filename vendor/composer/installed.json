@@ -1,29 +1,73 @@
 [
     {
-        "name": "abraham/twitteroauth",
-        "version": "0.5.2",
-        "version_normalized": "0.5.2.0",
+        "name": "indieweb/mention-client",
+        "version": "1.1.6",
+        "version_normalized": "1.1.6.0",
         "source": {
             "type": "git",
-            "url": "https://github.com/abraham/twitteroauth.git",
-            "reference": "040a2ebe76dc836e5edab83e7f036897a8715785"
+            "url": "https://github.com/indieweb/mention-client-php.git",
+            "reference": "eed3468f2237e9a03543a8edf14d83d4c2904667"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/abraham/twitteroauth/zipball/040a2ebe76dc836e5edab83e7f036897a8715785",
-            "reference": "040a2ebe76dc836e5edab83e7f036897a8715785",
+            "url": "https://api.github.com/repos/indieweb/mention-client-php/zipball/eed3468f2237e9a03543a8edf14d83d4c2904667",
+            "reference": "eed3468f2237e9a03543a8edf14d83d4c2904667",
+            "shasum": ""
+        },
+        "require": {
+            "mf2/mf2": ">=0.2",
+            "php": ">=5.4"
+        },
+        "require-dev": {
+            "phpunit/phpunit": ">=4.8.13"
+        },
+        "time": "2016-04-15 08:11:41",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "IndieWeb": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Apache-2.0"
+        ],
+        "authors": [
+            {
+                "name": "Aaron Parecki",
+                "email": "aaron@parecki.com",
+                "homepage": "http://aaronparecki.com/"
+            }
+        ],
+        "description": "Client library for sending webmention and pingback notifications",
+        "homepage": "https://github.com/indieweb/mention-client-php"
+    },
+    {
+        "name": "abraham/twitteroauth",
+        "version": "0.6.4",
+        "version_normalized": "0.6.4.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/abraham/twitteroauth.git",
+            "reference": "f7dec715c6e79e6085470b8b5d4dc2727afc5186"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/abraham/twitteroauth/zipball/f7dec715c6e79e6085470b8b5d4dc2727afc5186",
+            "reference": "f7dec715c6e79e6085470b8b5d4dc2727afc5186",
             "shasum": ""
         },
         "require": {
             "ext-curl": "*",
-            "php": ">=5.4.0"
+            "php": ">=5.5.0"
         },
         "require-dev": {
-            "phpmd/phpmd": "2.*",
-            "phpunit/phpunit": "4.*",
-            "squizlabs/php_codesniffer": "2.*"
+            "phpmd/phpmd": "2.3.*",
+            "phpunit/phpunit": "4.8.*",
+            "squizlabs/php_codesniffer": "2.3.*"
         },
-        "time": "2015-03-19 05:51:18",
+        "time": "2016-04-20 23:23:26",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -57,21 +101,21 @@
     },
     {
         "name": "mf2/mf2",
-        "version": "v0.2.10",
-        "version_normalized": "0.2.10.0",
+        "version": "v0.3.0",
+        "version_normalized": "0.3.0.0",
         "source": {
             "type": "git",
             "url": "https://github.com/indieweb/php-mf2.git",
-            "reference": "e514512cd8706d48bd33ae169b66427b32c777e3"
+            "reference": "4fb2eb5365cbc0fd2e0c26ca748777d6c2539763"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/indieweb/php-mf2/zipball/e514512cd8706d48bd33ae169b66427b32c777e3",
-            "reference": "e514512cd8706d48bd33ae169b66427b32c777e3",
+            "url": "https://api.github.com/repos/indieweb/php-mf2/zipball/4fb2eb5365cbc0fd2e0c26ca748777d6c2539763",
+            "reference": "4fb2eb5365cbc0fd2e0c26ca748777d6c2539763",
             "shasum": ""
         },
         "require": {
-            "php": ">=5.3.0"
+            "php": ">=5.4.0"
         },
         "require-dev": {
             "phpunit/phpunit": "3.7.*"
@@ -79,7 +123,7 @@
         "suggest": {
             "barnabywalters/mf-cleaner": "To more easily handle the canonical data php-mf2 gives you"
         },
-        "time": "2015-04-29 09:49:04",
+        "time": "2016-03-14 12:13:34",
         "bin": [
             "bin/fetch-mf2",
             "bin/parse-mf2"
@@ -93,7 +137,7 @@
         },
         "notification-url": "https://packagist.org/downloads/",
         "license": [
-            "MIT"
+            "CC0"
         ],
         "authors": [
             {
@@ -137,25 +181,25 @@
     },
     {
         "name": "indieweb/comments",
-        "version": "dev-master",
-        "version_normalized": "9999999-dev",
+        "version": "0.1.10",
+        "version_normalized": "0.1.10.0",
         "source": {
             "type": "git",
             "url": "https://github.com/indieweb/php-comments.git",
-            "reference": "b61bc2d8821c714dc9f7fb9a732597e1ade39c5a"
+            "reference": "804e3863ca58edc7c1897d3f1d11f7d086636886"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/indieweb/php-comments/zipball/dbbd50685711615d02eafbe8cac3d097d9faeeed",
-            "reference": "b61bc2d8821c714dc9f7fb9a732597e1ade39c5a",
+            "url": "https://api.github.com/repos/indieweb/php-comments/zipball/804e3863ca58edc7c1897d3f1d11f7d086636886",
+            "reference": "804e3863ca58edc7c1897d3f1d11f7d086636886",
             "shasum": ""
         },
         "require": {
             "tantek/cassis": "0.1.16124"
         },
-        "time": "2015-01-19 02:06:14",
+        "time": "2015-10-06 16:23:56",
         "type": "library",
-        "installation-source": "source",
+        "installation-source": "dist",
         "autoload": {
             "files": [
                 "src/indieweb/comments.php"
@@ -175,49 +219,5 @@
             "comments",
             "indieweb"
         ]
-    },
-    {
-        "name": "indieweb/mention-client",
-        "version": "1.1.6",
-        "version_normalized": "1.1.6.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/indieweb/mention-client-php.git",
-            "reference": "eed3468f2237e9a03543a8edf14d83d4c2904667"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/indieweb/mention-client-php/zipball/eed3468f2237e9a03543a8edf14d83d4c2904667",
-            "reference": "eed3468f2237e9a03543a8edf14d83d4c2904667",
-            "shasum": ""
-        },
-        "require": {
-            "mf2/mf2": ">=0.2",
-            "php": ">=5.4"
-        },
-        "require-dev": {
-            "phpunit/phpunit": ">=4.8.13"
-        },
-        "time": "2016-04-15 08:11:41",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-0": {
-                "IndieWeb": "src/"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "Apache-2.0"
-        ],
-        "authors": [
-            {
-                "name": "Aaron Parecki",
-                "email": "aaron@parecki.com",
-                "homepage": "http://aaronparecki.com/"
-            }
-        ],
-        "description": "Client library for sending webmention and pingback notifications",
-        "homepage": "https://github.com/indieweb/mention-client-php"
     }
 ]
