@@ -43,20 +43,24 @@ class Webmentions extends \ProcessWire\Wire {
       $dataItem = $data['items'][0];
 
       foreach ($data['items'] as $item) {
-        if ($item['type'][0] === 'h-entry' || $item['type'][0] === 'p-entry') {
+        if (in_array($item['type'][0], array('h-entry', 'p-entry'))) {
           $dataItem = $item;
         }
       }
 
       // check whether the webmention also contains a "like"
       $doubleTheLike = false;
-      if (array_key_exists('like-of', $dataItem['properties'])) {
-        if (in_array($this->target, $dataItem['properties']['like-of'])) {
-          $doubleTheLike = true;
-        }
-      }
+      // if (array_key_exists('like-of', $dataItem['properties'])) {
+      //   if (
+      //     in_array($this->target, $dataItem['properties']['like-of'])
+      //     || in_array($this->target, $dataItem['properties']['u-like-of'])
+      //     || in_array($this->target, $dataItem['properties']['u-like'])
+      //   ) {
+      //     $doubleTheLike = true;
+      //   }
+      // }
 
-      $this->result = \IndieWeb\comments\parse($dataItem, $this->source);
+      $this->result = \IndieWeb\comments\parse($dataItem, $this->target);
     }
 
     if (empty($this->result)) throw new WireException($this->_('Probably spam'));
@@ -81,9 +85,13 @@ class Webmentions extends \ProcessWire\Wire {
   public function sendWebmention() {
     $html = $this->modules->get('TextformatterMarkdownExtra')->markdown($this->httpPage->iw_content);
     $sourceURL = $this->httpPage->httpUrl;
-
     $client = new \IndieWeb\MentionClient();
-    $urls = $client->findOutgoingLinks($html);
+
+    if ($html) {
+      $urls = $client->findOutgoingLinks($html);
+    } else {
+      $urls = array($this->httpPage->iw_url);
+    }
 
     foreach ($urls as $targetURL) {
       $endpoint = $client->discoverWebmentionEndpoint($targetURL);

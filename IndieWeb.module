@@ -56,7 +56,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
 
   protected static $tmpls = array(
     'list' => 'iw_notes',
-    'single' => 'iw_note'
+    'single' => 'iw_note',
+    'likes' => 'iw_likes',
+    'like' => 'iw_like'
   );
 
   protected static $geocodeEndpoint = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&sensor=false';
@@ -93,6 +95,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     // post to twitter
     $this->addHookBefore('Pages::published', $this, 'postingToTwitter');
 
+    // save location
+    $this->addHookAfter('Pages::published', $this, 'convertLocation');
+
     // send webmention
     $this->addHookBefore('Pages::saved', $this, 'sendWebmention');
 
@@ -114,23 +119,19 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   }
 
   public function parseWebmention() {
-    $source = $this->wire('sanitizer')->url($this->input->post['source']);
-    $target = $this->wire('sanitizer')->url($this->input->post['target']);
-    $newWebmention = new Webmentions($source, $target);
+    $transfer = $this->input->post['source'] ? $this->input->post : $this->input->get;
+    $newWebmention = new Webmentions(
+      $this->wire('sanitizer')->url($transfer['source']),
+      $this->wire('sanitizer')->url($transfer['target'])
+    );
+
     $newWebmention->parseWebmention();
   }
 
   public function sendWebmention(HookEvent $event) {
-    $page = $event->arguments(0);
-    $source = '';
-    $target = '';
-    $newWebmention = new Webmentions($source, $target, $page);
+    $newWebmention = new Webmentions('', '', $event->arguments(0));
     $newWebmention->sendWebmention();
   }
-
-  // public function twitterconnect() {
-  //   return new TwitterConnect;
-  // }
 
   /**
    * Hook
@@ -143,13 +144,29 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
 
     if (!empty($parent_id)) {
       $parent = wire('pages')->get($parent_id);
+      $title = '';
 
-      if ($parent->template->name === self::$tmpls['list']) {
-        if (in_array($field->name, array('title', '_pw_page_name')) && empty($field->value)) {
-          $field->set('value', date('Ymd-Hi'));
+      if (in_array($field->name, array('title', '_pw_page_name')) && empty($field->value)) {
+        if ($parent->template->name === self::$tmpls['list']) {
+          $title = date('Ymd-Hi');
+        } elseif ($parent->template->name === self::$tmpls['likes']) {
+          $lastLike = $parent->children('sort=-created')->first();
+          $title = $lastLike ? (int)$lastLike->title + 1 : 1;
         }
+
+        if ($title) $field->set('value', $title);
       }
     }
+  }
+
+  /**
+   * Hook
+   *
+   * @param HookEvent $event
+   */
+  public function convertLocation(HookEvent $event) {
+    $page = $event->arguments(0);
+    $this->getAddress($page);
   }
 
   /**
@@ -163,18 +180,22 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
     $page->title = $page->title . '--' . $short;
 
     $category = (string)$page->iw_category;
-    if (!empty($category) && (int)$category === self::TWEET) {
+    if (!$page->iw_twitter_post_id && (int)$category === self::TWEET) {
       new TwitterConnect($page);
     }
   }
 
-  public function getAddress($lat, $lng) {
-    $address = '';
-    $url = sprintf(self::$geocodeEndpoint, trim($lat), trim($lng));
-    $json = file_get_contents($url);
-    $data = json_decode($json);
+  public function getAddress($page) {
+    $address = $page->iw_location_name;
+    if (!$address) {
+      $url = sprintf(self::$geocodeEndpoint, trim($page->iw_location_latitude), trim($page->iw_location_longitude));
+      $json = file_get_contents($url);
+      $data = json_decode($json);
 
-    if ($data->status === 'OK') $address = $data->results[3]->formatted_address;
+      if ($data && $data->status === 'OK') $address = $data->results[3]->formatted_address;
+
+      $page->setAndSave('iw_location_name', $address);
+    }
 
     return $address;
   }
@@ -202,6 +223,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   * @return string
   */
   public function truncateContent($str, $maxlen = 450) {
+    $str = strip_tags($str);
     if (strlen($str) > $maxlen) {
       $str = substr($str, 0, $maxlen);
 
