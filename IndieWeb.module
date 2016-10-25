@@ -223,7 +223,7 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   * @return string
   */
   public function truncateContent($str, $maxlen = 450) {
-    $str = strip_tags($str);
+    $str = strip_tags($str, '<a>');
     if (strlen($str) > $maxlen) {
       $str = substr($str, 0, $maxlen);
 
