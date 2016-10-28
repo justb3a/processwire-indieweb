@@ -86,12 +86,14 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    * @param Template $template Template object holding the form's fields.
    *
    */
-  public function init() {
-    wire('config')->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
+  public function ready() {
+    $this->config->twitterStatusURL = 'https://twitter.com/' . $this->twitterHandle . '/status/';
 
     // set page title to current datetime
     $this->addHookBefore('Inputfield::render', $this, 'renderField');
 
+    // only on pages with template=note
+    // if (in_array($this->page->template, array(self::$tmpls['single'], self::$tmpls['like']))) {
     // post to twitter
     $this->addHookBefore('Pages::published', $this, 'postingToTwitter');
 
@@ -111,7 +113,13 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    * @param HookEvent $event
    */
   public function addGeolocation(HookEvent $event) {
-    $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'scripts/Geolocation.js');
+    if ($pageId = $this->input->get->id) {
+      $page = $this->pages->get($pageId);
+
+      if ($page->template->name !== self::$tmpls['single']) return;
+
+      $this->config->scripts->append($this->config->urls->{self::CLASS_NAME} . 'scripts/Geolocation.js');
+    }
   }
 
   public function micropub() {
@@ -129,6 +137,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
   }
 
   public function sendWebmention(HookEvent $event) {
+    $page = $event->arguments(0);
+    if ($page->template->name !== self::$tmpls['single']) return;
+
     $newWebmention = new Webmentions('', '', $event->arguments(0));
     $newWebmention->sendWebmention();
   }
@@ -166,6 +177,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   public function convertLocation(HookEvent $event) {
     $page = $event->arguments(0);
+
+    if ($page->template->name !== self::$tmpls['single']) return;
+
     $this->getAddress($page);
   }
 
@@ -176,6 +190,9 @@ class IndieWeb extends WireData implements Module, ConfigurableModule {
    */
   public function postingToTwitter(HookEvent $event) {
     $page = $event->arguments(0);
+
+    if ($page->template->name !== self::$tmpls['single']) return;
+
     $short = wire('sanitizer')->pageName(substr($page->iw_content, 0, 10));
     $page->title = $page->title . '--' . $short;
 
